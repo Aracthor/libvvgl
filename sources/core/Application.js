@@ -29,6 +29,7 @@ VVGL.Application.prototype.initAPI = function () {
 	this.eventsManager = new VVGL.EventsManager(this.canvas);
 	this.sceneManager = new VVGL.SceneManager();
 	VVGL.EventsHandler.call(this, this.eventsManager);
+	this.clock = new VVGL.Clock();
 };
 
 /**
@@ -69,7 +70,7 @@ VVGL.Application.prototype.start = function () {
  * @private
  */
 VVGL.Application.prototype.manageData = function () {
-	this.elapsedTime = 42; // TODO : No cheat.
+	this.elapsedTime = this.clock.reset();
 	this.sceneManager.getCurrentScene().getRoot().update(this.elapsedTime);
 };
 
@@ -121,10 +122,9 @@ VVGL.Application.prototype.unlockPointer = function () {
  * Window will reload on F5.
  */
 VVGL.Application.prototype.acceptReload = function () {
-	var listener = new VVGL.KeyEventListener();
-	listener.onClick = function () {
+	var listener = new VVGL.KeyEventListener(function () {
 		window.location.reload(false);
-	};
+	});
 	this.addKeyPressListener(VVGL.KeyCode.F5, listener);
 };
 

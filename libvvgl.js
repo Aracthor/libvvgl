@@ -255,7 +255,7 @@ VVGL.EventsManager.prototype.onMouseUp = function (event) {
  * Called on mouse lock error.
  */
 VVGL.EventsManager.prototype.onLockError = function () {
-	aker("Couldn't lock mouse pointer.");
+	alert("Couldn't lock mouse pointer.");
 };
 
 /**
@@ -544,6 +544,7 @@ VVGL.Application.prototype.initAPI = function () {
 	this.eventsManager = new VVGL.EventsManager(this.canvas);
 	this.sceneManager = new VVGL.SceneManager();
 	VVGL.EventsHandler.call(this, this.eventsManager);
+	this.clock = new VVGL.Clock();
 };
 
 /**
@@ -584,7 +585,7 @@ VVGL.Application.prototype.start = function () {
  * @private
  */
 VVGL.Application.prototype.manageData = function () {
-	this.elapsedTime = 42; // TODO : No cheat.
+	this.elapsedTime = this.clock.reset();
 	this.sceneManager.getCurrentScene().getRoot().update(this.elapsedTime);
 };
 
@@ -636,10 +637,9 @@ VVGL.Application.prototype.unlockPointer = function () {
  * Window will reload on F5.
  */
 VVGL.Application.prototype.acceptReload = function () {
-	var listener = new VVGL.KeyEventListener();
-	listener.onClick = function () {
+	var listener = new VVGL.KeyEventListener(function () {
 		window.location.reload(false);
-	};
+	});
 	this.addKeyPressListener(VVGL.KeyCode.F5, listener);
 };
 
@@ -2368,4 +2368,35 @@ VVGL.SceneNode.prototype.getParent = function () {
  */
 VVGL.SceneNode.prototype.getChildren = function () {
 	return (this.children);
+};
+/**
+ * @class
+ * @classdesc Time lord.
+ */
+VVGL.Clock = function () {
+	this.reset();
+};
+
+/**
+ * Return elapsed time (in miliseconds) from last reset.
+ * 
+ * @return {number} Elapsed time since last reset.
+ */
+VVGL.Clock.prototype.getElapsedTime = function () {
+	return (new Date().getTime() - this.lastTime);
+};
+
+/**
+ * Reset clock counter.
+ * Called on creation.
+ * 
+ * @return {number} Elapsed time since last reset.
+ */
+VVGL.Clock.prototype.reset = function () {
+	var newTime = new Date().getTime();
+	var elapsedTime = newTime - this.lastTime;
+	
+	this.lastTime = newTime;
+	
+	return (elapsedTime);
 };

@@ -117,7 +117,7 @@ VVGL.EventsManager.prototype.onMouseUp = function (event) {
  * Called on mouse lock error.
  */
 VVGL.EventsManager.prototype.onLockError = function () {
-	aker("Couldn't lock mouse pointer.");
+	alert("Couldn't lock mouse pointer.");
 };
 
 /**
