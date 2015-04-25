@@ -5,7 +5,7 @@
 ## Login   <aracthor@epitech.net>
 ## 
 ## Started on  Sat Apr 11 09:31:12 2015 aracthor
-## Last Update Sat Apr 25 16:44:07 2015 aracthor
+## Last Update Sat Apr 25 22:22:39 2015 aracthor
 ##
 
 CC=		cat
@@ -89,6 +89,10 @@ SUPERVISORS_FILES=	MatrixSupervisor.js	\
 			ViewMatrix.js
 SUPERVISORS_SRCS=	$(SUPERVISORS_FILES:%.js=$(SUPERVISORS_DIR)%.js)
 
+TIME_DIR=	time/
+TIME_FILES=	Clock.js
+TIME_SRCS=	$(TIME_FILES:%.js=$(TIME_DIR)%.js)
+
 
 SRCS=	namespace.js		\
 	$(ENUMS_SRCS)		\
@@ -102,6 +106,7 @@ SRCS=	namespace.js		\
 	$(MESH_SRCS)		\
 	$(RENDER_SRCS)		\
 	$(SCENE_SRCS)		\
+	$(TIME_SRCS)		\
 #	$(SUPERVISORS_SRCS)
 
 
