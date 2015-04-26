@@ -858,7 +858,7 @@ VVGL.FreeFlyCamera.prototype.inertiaCoef = 0.95;
  * @type {number}
  * @default
  */
-VVGL.FreeFlyCamera.prototype.speed = 1.0;
+VVGL.FreeFlyCamera.prototype.speed = 0.01;
 
 /**
  * Rotation speed.
@@ -866,7 +866,7 @@ VVGL.FreeFlyCamera.prototype.speed = 1.0;
  * @type {number}
  * @default
  */
-VVGL.FreeFlyCamera.prototype.sensitivity = 0.01;
+VVGL.FreeFlyCamera.prototype.sensitivity = 0.005;
 
 
 /**
@@ -1272,9 +1272,8 @@ VVGL.Exception.prototype.what = function () {
 	return (this.message);
 };
 /**
- * Handle interns OpenGL errors.
- * 
  * @class
+ * @classdesc Handle interns OpenGL errors.
  * @extends VVGL.Exception
  * @private
  */
@@ -1319,9 +1318,8 @@ VVGL.GLErrorException.checkError = function (func) {
 	}
 };
 /**
- * Exception throwed on ressource initialisation fail.
- * 
  * @class
+ * @classdesc Exception throwed on ressource initialisation fail.
  * @extends VVGL.Exception
  * @param {Object} object Ressource linked to problem.
  * @param {string} message Problem resume.
@@ -1736,8 +1734,7 @@ VVGL.ArrayBuffer.prototype.getItemSize = function () {
 VVGL.ArrayBuffer.prototype.bind = function () {
 	gl.bindBuffer(this.type, this.buffer);
 	if (this.attribute !== null) {
-		var program = VVGL.ShaderProgram.currentProgram;
-		program.setAttribute(this.attribute, this);
+		VVGL.ShaderProgram.currentProgram.setAttribute(this.attribute, this);
 	}
 };
 
@@ -1746,6 +1743,9 @@ VVGL.ArrayBuffer.prototype.bind = function () {
  */
 VVGL.ArrayBuffer.prototype.unbind = function () {
 	gl.bindBuffer(this.type, null);
+	if (this.attribute !== null) {
+		VVGL.ShaderProgram.currentProgram.unsetAttribute(this.attribute);
+	}
 };
 /**
  * Represent a model.
@@ -1757,6 +1757,9 @@ VVGL.Mesh = function (renderMode) {
 	renderMode = VVGL.setIfUndefined(renderMode, VVGL.RenderMode.TRIANGLES);
 	
 	this.verticesBuffers = [];
+	this.useColor = false;
+	this.useTextureCoord = false;
+	this.texture = null;
 	this.indices = null;
 	
 	this.renderMode = renderMode;
@@ -1805,6 +1808,17 @@ VVGL.Mesh.prototype.bindArrays = function () {
 	if (this.indices) {
 		this.indices.bind();
 	}
+	
+	var shader = VVGL.ShaderProgram.currentProgram;
+	shader.setBoolUniform("uUseColor", this.useColor);
+	shader.setBoolUniform("uUseTexture", this.useTextureCoord);
+	
+	if (this.useTextureCoord) {
+		if (this.texture === null) {
+			throw new VVGL.Exception("Trying to render a textured mesh without texture.");
+		}
+		this.texture.activate();
+	}
 };
 
 /**
@@ -1826,7 +1840,7 @@ VVGL.Mesh.prototype.unbindArrays = function () {
  */
 VVGL.Mesh.prototype.addPositions = function (positions) {
 	var buffer = this.createFloatData(positions, 3);
-	buffer.linkToAttribute("aVertexPosition");
+	buffer.linkToAttribute("aPosition");
 	if (this.indices === null) {
 		this.itemsNumber = positions.length / 3;
 	}
@@ -1835,14 +1849,28 @@ VVGL.Mesh.prototype.addPositions = function (positions) {
 };
 
 /**
- * Create positions array buffer from positions data.
+ * Create colors array buffer from colors data.
  * 
- * @param {Array} positions Float array.
+ * @param {Array} colors Float array.
  */
 VVGL.Mesh.prototype.addColors = function (colors) {
 	buffer = this.createFloatData(colors, 4);
-	buffer.linkToAttribute("aVertexColor");
+	buffer.linkToAttribute("aColor");
 	
+	this.useColor = true;
+	this.verticesBuffers.push(buffer);
+};
+
+/**
+ * Create texture coords array buffer from texture coords data.
+ * 
+ * @param {Array} positions Float array.
+ */
+VVGL.Mesh.prototype.addTextureCoords = function (textureCoords) {
+	buffer = this.createFloatData(textureCoords, 2);
+	buffer.linkToAttribute("aTextureCoord");
+	
+	this.useTextureCoord = true;
 	this.verticesBuffers.push(buffer);
 };
 
@@ -1854,6 +1882,15 @@ VVGL.Mesh.prototype.addColors = function (colors) {
 VVGL.Mesh.prototype.addIndices = function (indices) {
 	this.indices = this.createIntData(indices);
 	this.itemsNumber = indices.length;
+};
+
+/**
+ * Set mesh texture. Necessary if textureCoords are used.
+ * 
+ * @param {VVGL.Texture} texture
+ */
+VVGL.Mesh.prototype.setTexture = function (texture) {
+	this.texture = texture;
 };
 
 /**
@@ -1941,271 +1978,6 @@ VVGL.Renderer.prototype.drawScene = function (scene) {
 	program.setMatrix4Uniform("uModelMatrix", new VVGL.Mat4());
 	
 	scene.getRoot().render(this);
-};
-/**
- * Compiled vertex or fragment shader.
- * Do not try to create instances yourself.
- * Just do not.
- * 
- * @class Compiled vertex or fragment shader.
- * @constructor
- * @private
- * @param {string} code GLSL code to compile.
- * @param {number} type GL maccro corresponding to shader type (vertex or fragment).
- * @param {string} elementId Optional element id to indicate which is this shader in case of compilation failure.
- */
-VVGL.Shader = function (code, type, elementId) {
-	this.type = VVGL.Shader.getStringType(type);
-	this.shader = gl.createShader(type);
-	gl.shaderSource(this.shader, code);
-	gl.compileShader(this.shader);
-	
-    if (!gl.getShaderParameter(this.shader, gl.COMPILE_STATUS)) {
-    	var message;
-    	
-    	if (elementId === undefined) {
-    		message = "Couldn't compile " + this.type + " shader: ";
-    	} else {
-    		message = "Couldn't compile " + elementId + ": ";
-    	}
-    	throw new VVGL.GLRessourceException(this, message + gl.getShaderInfoLog(this.shader));
-    }
-};
-
-/**
- * Return a shader type in a string from gl shader type enum.
- * 
- * @param {number} type gl.VERTEX_SHADER or gl.FRAGMENT_SHADER
- * @return {string} Shader type name.
- */
-VVGL.Shader.getStringType = function (type) {
-	var name = "undefined";
-	
-	if (type == gl.VERTEX_SHADER) {
-		name = "vertex";
-	} else if (type == gl.FRAGMENT_SHADER) {
-		name = "fragment";
-	}
-	
-	return (name);
-};
-
-/**
- * Send an HTTP request for a shader file.
- * 
- * @private
- * @param {string} elementId Element id linked to file.
- * @return {Promise} Future HTTP request result.
- */
-VVGL.Shader.getShaderFromHTTP = function (elementId) {
-   return new Promise(function(resolve, reject){ // return a future
-
-   });
-};
-
-/**
- * Create a shader from an element id linked to shader file.
- * 
- * @param {string} elementId Element id linked to file.
- * @param {number} type GL maccro corresponding to shader type (vertex or fragment).
- * @return {VVGL.Shader} Created shader.
- */
-VVGL.Shader.createFromFile = function(elementId, type) {
-	var shader;
-	var code;
-    var file = document.getElementById(elementId).src;
-    var xhr = new XMLHttpRequest;
-    xhr.open("GET", file, false);
-    xhr.send(null); 
-
-	if (xhr.status == 200) {
-		shader = new VVGL.Shader(xhr.responseText, type, elementId);
-	} else {
-    	throw new Exception("Http request fail with error code " + xhr.status);
-	}
-	
-	return (shader);
-};
-
-VVGL.Shader.createFronString = function (code, type) {
-	return (new VVGL.Shader(code, type));
-};
-/**
- * Shader program containing both vertex and fragment shader.
- * Do not try to create instances from the constructor. Call static functions to create it.
- *
- * @class
- * @private
- * @param {VVGL.Shader} vertexShader Compiled vertex part of shader program.
- * @param {VVGL.Shader} fragmentShader Compiled fragment part of shader program.
- */
-VVGL.ShaderProgram = function (vertexShader, fragmentShader) {
-	this.attributes = [];
-	this.uniforms = [];
-	
-	this.program = gl.createProgram();
-	gl.attachShader(this.program, vertexShader.shader);
-	gl.attachShader(this.program, fragmentShader.shader);
-	gl.linkProgram(this.program);
-	
-	if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
-		throw new VVGL.GLRessourceException(this, "Could not initliase shader program.");
-	}
-	
-	this.bind();
-	this.addAttribute("aVertexPosition");
-	this.addAttribute("aVertexColor");
-	this.addUniform("uModelMatrix");
-	this.addUniform("uPerspectiveMatrix");
-	this.addUniform("uViewMatrix");
-};
-
-/**
- * Vertex part of shader program.
- * 
- * @type {VVGL.Shader}
- */
-VVGL.ShaderProgram.prototype.vertexShader = null;
-
-/**
- * Fragment part of shader program.
- * 
- * @type {VVGL.Shader}
- */
-VVGL.ShaderProgram.prototype.fragmentShader = null;
-
-
-/**
- * Init Attribute location.
- * 
- * @param {string} name Attribute name.
- */
-VVGL.ShaderProgram.prototype.addAttribute = function (name) {
-	var location = gl.getAttribLocation(this.program, name);
-	this.attributes[name] = location;
-	gl.enableVertexAttribArray(location);
-};
-
-/**
- * Init Uniform location.
- * 
- * @param {string} name Uniform name.
- */
-VVGL.ShaderProgram.prototype.addUniform = function (name) {
-	this.uniforms[name] = gl.getUniformLocation(this.program, name);
-};
-
-/**
- * Set this shader to use.
- */
-VVGL.ShaderProgram.prototype.bind = function () {
-	gl.useProgram(this.program);
-	VVGL.ShaderProgram.currentProgram = this;
-};
-
-/**
- * Set none shader to use.
- */
-VVGL.ShaderProgram.prototype.unbind = function () {
-	gl.useProgram(0);
-	VVGL.ShaderProgram.currentProgram = null;
-};
-
-/**
- * Set attribute buffer.
- * 
- * @param {string} name
- * @param {VVGL.ArrayBuffer} buffer
- */
-VVGL.ShaderProgram.prototype.setAttribute = function (name, buffer) {
-	var location = this.attributes[name];
-	
-	if (location === undefined) {
-		throw new VVGL.Exception("Trying to get undefined attribute: " + name);
-	}
-	
-	gl.vertexAttribPointer(location, buffer.getItemSize(), gl.FLOAT, false, 0, 0);
-};
-
-/**
- * Return uniform location.
- * 
- * @private
- * @param {string} name Uniform name
- */
-VVGL.ShaderProgram.prototype.getUniform = function (name) {
-	var uniform = this.uniforms[name];
-	
-	if (uniform === undefined) {
-		throw new VVGL.Exception("Trying to get undefined uniform: " + name);
-	}
-	
-	return (uniform);
-};
-
-/**
- * Set Mat4 uniform.
- * 
- * @param {string} name Uniform variable name.
- * @param {VVGL.Mat4} matrix Uniform variable value.
- */
-VVGL.ShaderProgram.prototype.setMatrix4Uniform = function (name, matrix) {
-	var uniform = this.getUniform(name);
-	gl.uniformMatrix4fv(uniform, false, matrix.toArray());
-};
-
-
-/**
- * Currently used shader program.
- * 
- * @static
- * @type {VVGL.ShaderProgram}
- */
-VVGL.ShaderProgram.currentProgram = null;
-
-/**
- * Create a shader program from two element ids linked to shaders files.
- * 
- * @static
- * @param {string} vertexId Element id of vertex shader file.
- * @param {string} fragmentId Element id of fragment shader file.
- * @return {VVGL.ShaderProgram} Created program.
- */
-VVGL.ShaderProgram.createFromFiles = function (vertexId, fragmentId) {
-	var vertexShader = VVGL.Shader.createFromFile(vertexId, gl.VERTEX_SHADER);
-	var fragmentShader = VVGL.Shader.createFromFile(fragmentId, gl.FRAGMENT_SHADER);
-	
-	return (new VVGL.ShaderProgram(vertexShader, fragmentShader));
-};
-
-/**
- * Create a shader program from two element ids linked to shaders scripts.
- * 
- * @static
- * @param {string} vertexId Element id of vertex shader script.
- * @param {string} fragmentId Element id of fragment shader script.
- * @return {VVGL.ShaderProgram} Program created.
- */
-VVGL.ShaderProgram.createFromScripts = function (vertexId, fragmentId) {
-	var vertexShader = VVGL.Shader.createFromScript(vertexId, gl.VERTEX_SHADER);
-	var fragmentShader = VVGL.Shader.createFromScript(fragmentId, gl.FRAGMENT_SHADER);
-	
-	return (new VVGL.ShaderProgram(vertexShader, fragmentShader));
-};
-
-/**
- * Create a shader program from two strings containing shaders's codes.
- * 
- * @static
- * @param {string} vertexString Vertex shader code.
- * @param {string} fragmentString Fragment shader code.
- * @return {VVGL.ShaderProgram} Program created.
- */
-VVGL.ShaderProgram.createFromStrings = function (vertexString, fragmentString) {
-	var vertexShader = VVGL.Shader.createFromString(vertexString, gl.VERTEX_SHADER);
-	var fragmentShader = VVGL.Shader.createFromString(fragmentString, gl.FRAGMENT_SHADER);
-	
-	return (new VVGL.ShaderProgram(vertexShader, fragmentShader));
 };
 /**
  * World scene.
@@ -2368,6 +2140,409 @@ VVGL.SceneNode.prototype.getParent = function () {
  */
 VVGL.SceneNode.prototype.getChildren = function () {
 	return (this.children);
+};
+/**
+ * @class
+ * @classdesc Represent a shader attribute.
+ * @param {VVGL.ShaderProgram} shader
+ * @param {string} name
+ */
+VVGL.Attribute = function (shader, name) {
+	this.shader = shader;
+	this.name = name;
+	this.location = gl.getAttribLocation(shader.program, name);
+	if (this.location === -1) {
+		throw new VVGL.GLRessourceException(this.shader, "Cannot reach location of attribute " + name);
+	}
+};
+
+/**
+ * Enable attribute.
+ */
+VVGL.Attribute.prototype.enable = function () {
+	gl.enableVertexAttribArray(this.location);
+};
+
+/**
+ * Disable attribute.
+ */
+VVGL.Attribute.prototype.disable = function () {
+	gl.disableVertexAttribArray(this.location);
+};
+/**
+ * Compiled vertex or fragment shader.
+ * Do not try to create instances yourself.
+ * Just do not.
+ * 
+ * @class Compiled vertex or fragment shader.
+ * @constructor
+ * @private
+ * @param {string} code GLSL code to compile.
+ * @param {number} type GL maccro corresponding to shader type (vertex or fragment).
+ * @param {string} elementId Optional element id to indicate which is this shader in case of compilation failure.
+ */
+VVGL.Shader = function (code, type, elementId) {
+	this.type = VVGL.Shader.getStringType(type);
+	this.shader = gl.createShader(type);
+	gl.shaderSource(this.shader, code);
+	gl.compileShader(this.shader);
+	
+    if (!gl.getShaderParameter(this.shader, gl.COMPILE_STATUS)) {
+    	var message;
+    	
+    	if (elementId === undefined) {
+    		message = "Couldn't compile " + this.type + " shader: ";
+    	} else {
+    		message = "Couldn't compile " + elementId + ": ";
+    	}
+    	throw new VVGL.GLRessourceException(this, message + gl.getShaderInfoLog(this.shader));
+    }
+};
+
+/**
+ * Return a shader type in a string from gl shader type enum.
+ * 
+ * @param {number} type gl.VERTEX_SHADER or gl.FRAGMENT_SHADER
+ * @return {string} Shader type name.
+ */
+VVGL.Shader.getStringType = function (type) {
+	var name = "undefined";
+	
+	if (type == gl.VERTEX_SHADER) {
+		name = "vertex";
+	} else if (type == gl.FRAGMENT_SHADER) {
+		name = "fragment";
+	}
+	
+	return (name);
+};
+
+/**
+ * Send an HTTP request for a shader file.
+ * 
+ * @private
+ * @param {string} elementId Element id linked to file.
+ * @return {Promise} Future HTTP request result.
+ */
+VVGL.Shader.getShaderFromHTTP = function (elementId) {
+   return new Promise(function(resolve, reject){ // return a future
+
+   });
+};
+
+/**
+ * Create a shader from an element id linked to shader file.
+ * 
+ * @param {string} elementId Element id linked to file.
+ * @param {number} type GL maccro corresponding to shader type (vertex or fragment).
+ * @return {VVGL.Shader} Created shader.
+ */
+VVGL.Shader.createFromFile = function(elementId, type) {
+	var shader;
+	var code;
+    var file = document.getElementById(elementId).src;
+    var xhr = new XMLHttpRequest;
+    xhr.open("GET", file, false);
+    xhr.send(null); 
+
+	if (xhr.status == 200) {
+		shader = new VVGL.Shader(xhr.responseText, type, elementId);
+	} else {
+    	throw new Exception("Http request fail with error code " + xhr.status);
+	}
+	
+	return (shader);
+};
+
+VVGL.Shader.createFronString = function (code, type) {
+	return (new VVGL.Shader(code, type));
+};
+/**
+ * Shader program containing both vertex and fragment shader.
+ * Do not try to create instances from the constructor. Call static functions to create it.
+ *
+ * @class
+ * @private
+ * @param {VVGL.Shader} vertexShader Compiled vertex part of shader program.
+ * @param {VVGL.Shader} fragmentShader Compiled fragment part of shader program.
+ */
+VVGL.ShaderProgram = function (vertexShader, fragmentShader) {
+	this.attributes = [];
+	this.uniforms = [];
+	
+	this.program = gl.createProgram();
+	gl.attachShader(this.program, vertexShader.shader);
+	gl.attachShader(this.program, fragmentShader.shader);
+	gl.linkProgram(this.program);
+	
+	if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
+		throw new VVGL.GLRessourceException(this, "Could not initliase shader program.");
+	}
+	
+	this.bind();
+	this.addAttribute("aPosition");
+	this.addAttribute("aColor");
+	this.addAttribute("aTextureCoord");
+
+	this.addUniform("uModelMatrix");
+	this.addUniform("uPerspectiveMatrix");
+	this.addUniform("uViewMatrix");
+	this.addUniform("uUseColor");
+	this.addUniform("uUseTexture");
+	this.addUniform("uTexture");
+};
+
+/**
+ * Vertex part of shader program.
+ * 
+ * @type {VVGL.Shader}
+ */
+VVGL.ShaderProgram.prototype.vertexShader = null;
+
+/**
+ * Fragment part of shader program.
+ * 
+ * @type {VVGL.Shader}
+ */
+VVGL.ShaderProgram.prototype.fragmentShader = null;
+
+
+/**
+ * Init Attribute location.
+ * 
+ * @param {string} name Attribute name.
+ */
+VVGL.ShaderProgram.prototype.addAttribute = function (name) {
+	this.attributes[name] = new VVGL.Attribute(this, name);
+};
+
+/**
+ * Init Uniform location.
+ * 
+ * @param {string} name Uniform name.
+ */
+VVGL.ShaderProgram.prototype.addUniform = function (name) {
+	var location = gl.getUniformLocation(this.program, name);
+	if (location === -1) {
+		throw new VVGL.GLRessourceException(this, "Cannot reach location of uniform " + name);
+	}
+	this.uniforms[name] = location;
+};
+
+/**
+ * Set this shader to use.
+ */
+VVGL.ShaderProgram.prototype.bind = function () {
+	gl.useProgram(this.program);
+	VVGL.ShaderProgram.currentProgram = this;
+};
+
+/**
+ * Set none shader to use.
+ */
+VVGL.ShaderProgram.prototype.unbind = function () {
+	gl.useProgram(0);
+	VVGL.ShaderProgram.currentProgram = null;
+};
+
+/**
+ * Set attribute buffer.
+ * 
+ * @param {string} name
+ * @param {VVGL.ArrayBuffer} buffer
+ */
+VVGL.ShaderProgram.prototype.setAttribute = function (name, buffer) {
+	var attribute = this.attributes[name];
+	
+	if (!attribute) {
+		throw new VVGL.Exception("Trying to get undefined attribute: " + name);
+	}
+	
+	attribute.enable();
+	gl.vertexAttribPointer(attribute.location, buffer.getItemSize(), gl.FLOAT, false, 0, 0);
+};
+
+/**
+ * Unset attribute buffer.
+ * 
+ * @param {string} name
+ */
+VVGL.ShaderProgram.prototype.unsetAttribute = function (name) {
+	var attribute = this.attributes[name];
+	
+	if (!attribute) {
+		throw new VVGL.Exception("Trying to get undefined attribute: " + name);
+	}
+	
+	attribute.disable();
+};
+
+/**
+ * Return uniform location.
+ * 
+ * @private
+ * @param {string} name Uniform name
+ */
+VVGL.ShaderProgram.prototype.getUniform = function (name) {
+	var uniform = this.uniforms[name];
+	
+	if (uniform === undefined) {
+		throw new VVGL.Exception("Trying to get undefined uniform: " + name);
+	}
+	
+	return (uniform);
+};
+
+/**
+ * Set Int or Bool uniform.
+ * 
+ * @param {string} name Uniform variable name.
+ * @param {number} value Uniform variable value.
+ */
+VVGL.ShaderProgram.prototype.setIntUniform = function (name, value) {
+	gl.uniform1i(this.getUniform(name), value);
+};
+
+/**
+ * @see {@link VVGL.ShaderProgram.prototype.setIntUniform}
+ */
+VVGL.ShaderProgram.prototype.setBoolUniform = VVGL.ShaderProgram.prototype.setIntUniform;
+
+/**
+ * Set Mat4 uniform.
+ * 
+ * @param {string} name Uniform variable name.
+ * @param {VVGL.Mat4} matrix Uniform variable value.
+ */
+VVGL.ShaderProgram.prototype.setMatrix4Uniform = function (name, matrix) {
+	var uniform = this.getUniform(name);
+	gl.uniformMatrix4fv(uniform, false, matrix.toArray());
+};
+
+
+/**
+ * Currently used shader program.
+ * 
+ * @static
+ * @type {VVGL.ShaderProgram}
+ */
+VVGL.ShaderProgram.currentProgram = null;
+
+/**
+ * Create a shader program from two element ids linked to shaders files.
+ * 
+ * @static
+ * @param {string} vertexId Element id of vertex shader file.
+ * @param {string} fragmentId Element id of fragment shader file.
+ * @return {VVGL.ShaderProgram} Created program.
+ */
+VVGL.ShaderProgram.createFromFiles = function (vertexId, fragmentId) {
+	var vertexShader = VVGL.Shader.createFromFile(vertexId, gl.VERTEX_SHADER);
+	var fragmentShader = VVGL.Shader.createFromFile(fragmentId, gl.FRAGMENT_SHADER);
+	
+	return (new VVGL.ShaderProgram(vertexShader, fragmentShader));
+};
+
+/**
+ * Create a shader program from two element ids linked to shaders scripts.
+ * 
+ * @static
+ * @param {string} vertexId Element id of vertex shader script.
+ * @param {string} fragmentId Element id of fragment shader script.
+ * @return {VVGL.ShaderProgram} Program created.
+ */
+VVGL.ShaderProgram.createFromScripts = function (vertexId, fragmentId) {
+	var vertexShader = VVGL.Shader.createFromScript(vertexId, gl.VERTEX_SHADER);
+	var fragmentShader = VVGL.Shader.createFromScript(fragmentId, gl.FRAGMENT_SHADER);
+	
+	return (new VVGL.ShaderProgram(vertexShader, fragmentShader));
+};
+
+/**
+ * Create a shader program from two strings containing shaders's codes.
+ * 
+ * @static
+ * @param {string} vertexString Vertex shader code.
+ * @param {string} fragmentString Fragment shader code.
+ * @return {VVGL.ShaderProgram} Program created.
+ */
+VVGL.ShaderProgram.createFromStrings = function (vertexString, fragmentString) {
+	var vertexShader = VVGL.Shader.createFromString(vertexString, gl.VERTEX_SHADER);
+	var fragmentShader = VVGL.Shader.createFromString(fragmentString, gl.FRAGMENT_SHADER);
+	
+	return (new VVGL.ShaderProgram(vertexShader, fragmentShader));
+};
+/**
+ * Create new texture from image file.
+ * 
+ * @class
+ * @classdesc Bindable texture.
+ * @implements {VVGL.IBindable}
+ * @param {string} source Image file path.
+ * @todo Add texture manager.
+ */
+VVGL.Texture = function (source) {
+	var me = this;
+	
+	this.texture = gl.createTexture();
+	this.image = new Image();
+	this.image.onload = function () {me.onLoad();};
+	this.image.onerror = function () {me.onError();};
+	this.image.src = source;
+};
+
+VVGL.Texture.prototype = Object.create(VVGL.IBindable.prototype);
+
+/**
+ * Define this texture as used.
+ */
+VVGL.Texture.prototype.bind = function () {
+	gl.bindTexture(gl.TEXTURE_2D, this.texture);
+};
+
+/**
+ * Define no texture as used.
+ */
+VVGL.Texture.prototype.unbind = function () {
+	gl.bindTexture(gl.TEXTURE_2D, null);
+};
+
+/**
+ * Use this texture in shader.
+ * 
+ * @todo Use multiple textures.
+ */
+VVGL.Texture.prototype.activate = function () {
+	var shader = VVGL.ShaderProgram.currentProgram;
+	
+    gl.activeTexture(gl.TEXTURE0);
+    this.bind();
+    shader.setIntUniform("uTexture", 0);
+};
+
+/**
+ * Called if image loading failed.
+ * 
+ * @private
+ */
+VVGL.Texture.prototype.onError = function () {
+	alert("Failed to load texture " + this.image.src);
+};
+
+/**
+ * Called once image finished to load.
+ * 
+ * @private
+ */
+VVGL.Texture.prototype.onLoad = function () {
+	this.bind();
+	{
+	    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+	    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image);
+	    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+	    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+	}
+    this.unbind();
 };
 /**
  * @class

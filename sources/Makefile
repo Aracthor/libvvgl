@@ -5,7 +5,7 @@
 ## Login   <aracthor@epitech.net>
 ## 
 ## Started on  Sat Apr 11 09:31:12 2015 aracthor
-## Last Update Sat Apr 25 22:22:39 2015 aracthor
+## Last Update Sun Apr 26 15:03:24 2015 aracthor
 ##
 
 CC=		cat
@@ -71,10 +71,14 @@ MESH_FILES=	ArrayBuffer.js	\
 MESH_SRCS=	$(MESH_FILES:%.js=$(MESH_DIR)%.js)
 
 RENDER_DIR=	render/
-RENDER_FILES=	Renderer.js	\
-		Shader.js	\
-		ShaderProgram.js
+RENDER_FILES=	Renderer.js
 RENDER_SRCS=	$(RENDER_FILES:%.js=$(RENDER_DIR)%.js)
+
+SHADER_DIR=	shader/
+SHADER_FILES=	Attribute.js		\
+		Shader.js		\
+		ShaderProgram.js
+SHADER_SRCS=	$(SHADER_FILES:%.js=$(SHADER_DIR)%.js)
 
 SCENE_DIR=	scene/
 SCENE_FILES=	Scene.js	\
@@ -88,6 +92,10 @@ SUPERVISORS_FILES=	MatrixSupervisor.js	\
 			PerspectiveMatrix.js	\
 			ViewMatrix.js
 SUPERVISORS_SRCS=	$(SUPERVISORS_FILES:%.js=$(SUPERVISORS_DIR)%.js)
+
+TEXTURE_DIR=	texture/
+TEXTURE_FILES=	Texture.js
+TEXTURE_SRCS=	$(TEXTURE_FILES:%.js=$(TEXTURE_DIR)%.js)
 
 TIME_DIR=	time/
 TIME_FILES=	Clock.js
@@ -106,6 +114,8 @@ SRCS=	namespace.js		\
 	$(MESH_SRCS)		\
 	$(RENDER_SRCS)		\
 	$(SCENE_SRCS)		\
+	$(SHADER_SRCS)		\
+	$(TEXTURE_SRCS)		\
 	$(TIME_SRCS)		\
 #	$(SUPERVISORS_SRCS)
 

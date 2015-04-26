@@ -1,7 +1,6 @@
 /**
- * Handle interns OpenGL errors.
- * 
  * @class
+ * @classdesc Handle interns OpenGL errors.
  * @extends VVGL.Exception
  * @private
  */

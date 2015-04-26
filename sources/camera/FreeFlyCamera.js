@@ -41,7 +41,7 @@ VVGL.FreeFlyCamera.prototype.inertiaCoef = 0.95;
  * @type {number}
  * @default
  */
-VVGL.FreeFlyCamera.prototype.speed = 1.0;
+VVGL.FreeFlyCamera.prototype.speed = 0.01;
 
 /**
  * Rotation speed.
@@ -49,7 +49,7 @@ VVGL.FreeFlyCamera.prototype.speed = 1.0;
  * @type {number}
  * @default
  */
-VVGL.FreeFlyCamera.prototype.sensitivity = 0.01;
+VVGL.FreeFlyCamera.prototype.sensitivity = 0.005;
 
 
 /**

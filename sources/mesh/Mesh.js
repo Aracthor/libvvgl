@@ -8,6 +8,9 @@ VVGL.Mesh = function (renderMode) {
 	renderMode = VVGL.setIfUndefined(renderMode, VVGL.RenderMode.TRIANGLES);
 	
 	this.verticesBuffers = [];
+	this.useColor = false;
+	this.useTextureCoord = false;
+	this.texture = null;
 	this.indices = null;
 	
 	this.renderMode = renderMode;
@@ -56,6 +59,17 @@ VVGL.Mesh.prototype.bindArrays = function () {
 	if (this.indices) {
 		this.indices.bind();
 	}
+	
+	var shader = VVGL.ShaderProgram.currentProgram;
+	shader.setBoolUniform("uUseColor", this.useColor);
+	shader.setBoolUniform("uUseTexture", this.useTextureCoord);
+	
+	if (this.useTextureCoord) {
+		if (this.texture === null) {
+			throw new VVGL.Exception("Trying to render a textured mesh without texture.");
+		}
+		this.texture.activate();
+	}
 };
 
 /**
@@ -77,7 +91,7 @@ VVGL.Mesh.prototype.unbindArrays = function () {
  */
 VVGL.Mesh.prototype.addPositions = function (positions) {
 	var buffer = this.createFloatData(positions, 3);
-	buffer.linkToAttribute("aVertexPosition");
+	buffer.linkToAttribute("aPosition");
 	if (this.indices === null) {
 		this.itemsNumber = positions.length / 3;
 	}
@@ -86,14 +100,28 @@ VVGL.Mesh.prototype.addPositions = function (positions) {
 };
 
 /**
- * Create positions array buffer from positions data.
+ * Create colors array buffer from colors data.
  * 
- * @param {Array} positions Float array.
+ * @param {Array} colors Float array.
  */
 VVGL.Mesh.prototype.addColors = function (colors) {
 	buffer = this.createFloatData(colors, 4);
-	buffer.linkToAttribute("aVertexColor");
+	buffer.linkToAttribute("aColor");
 	
+	this.useColor = true;
+	this.verticesBuffers.push(buffer);
+};
+
+/**
+ * Create texture coords array buffer from texture coords data.
+ * 
+ * @param {Array} positions Float array.
+ */
+VVGL.Mesh.prototype.addTextureCoords = function (textureCoords) {
+	buffer = this.createFloatData(textureCoords, 2);
+	buffer.linkToAttribute("aTextureCoord");
+	
+	this.useTextureCoord = true;
 	this.verticesBuffers.push(buffer);
 };
 
@@ -105,6 +133,15 @@ VVGL.Mesh.prototype.addColors = function (colors) {
 VVGL.Mesh.prototype.addIndices = function (indices) {
 	this.indices = this.createIntData(indices);
 	this.itemsNumber = indices.length;
+};
+
+/**
+ * Set mesh texture. Necessary if textureCoords are used.
+ * 
+ * @param {VVGL.Texture} texture
+ */
+VVGL.Mesh.prototype.setTexture = function (texture) {
+	this.texture = texture;
 };
 
 /**

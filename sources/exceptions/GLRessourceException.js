@@ -1,7 +1,6 @@
 /**
- * Exception throwed on ressource initialisation fail.
- * 
  * @class
+ * @classdesc Exception throwed on ressource initialisation fail.
  * @extends VVGL.Exception
  * @param {Object} object Ressource linked to problem.
  * @param {string} message Problem resume.
