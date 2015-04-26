@@ -5,7 +5,7 @@
 ## Login   <aracthor@epitech.net>
 ## 
 ## Started on  Sat Apr 11 09:31:12 2015 aracthor
-## Last Update Sun Apr 26 15:03:24 2015 aracthor
+## Last Update Sun Apr 26 16:08:49 2015 aracthor
 ##
 
 CC=		cat
@@ -71,7 +71,8 @@ MESH_FILES=	ArrayBuffer.js	\
 MESH_SRCS=	$(MESH_FILES:%.js=$(MESH_DIR)%.js)
 
 RENDER_DIR=	render/
-RENDER_FILES=	Renderer.js
+RENDER_FILES=	FrameRender.js	\
+		Renderer.js
 RENDER_SRCS=	$(RENDER_FILES:%.js=$(RENDER_DIR)%.js)
 
 SHADER_DIR=	shader/
@@ -81,8 +82,9 @@ SHADER_FILES=	Attribute.js		\
 SHADER_SRCS=	$(SHADER_FILES:%.js=$(SHADER_DIR)%.js)
 
 SCENE_DIR=	scene/
-SCENE_FILES=	Scene.js	\
-		SceneManager.js	\
+SCENE_FILES=	Scene.js		\
+		SceneManager.js		\
+		Transformable.js	\
 		SceneNode.js
 SCENE_SRCS=	$(SCENE_FILES:%.js=$(SCENE_DIR)%.js)
 

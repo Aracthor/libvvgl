@@ -2,9 +2,11 @@
  * Represent a model.
  * 
  * @class
- * @implements {VVGL.SceneData}
+ * @extends VVGL.SceneData
+ * @param {VVGL.RenderMode} renderMode
  */
 VVGL.Mesh = function (renderMode) {
+	VVGL.SceneData.call(this, "mesh");
 	renderMode = VVGL.setIfUndefined(renderMode, VVGL.RenderMode.TRIANGLES);
 	
 	this.verticesBuffers = [];
@@ -148,9 +150,8 @@ VVGL.Mesh.prototype.setTexture = function (texture) {
  * Render mesh to scene, drawing parts.
  * 
  * @override
- * @param {VVGL.Renderer} renderer
  */
-VVGL.Mesh.prototype.render = function (renderer) {
+VVGL.Mesh.prototype.render = function () {
 	this.bindArrays();
 	{
 		if (this.indices === null) {

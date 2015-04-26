@@ -115,16 +115,28 @@ VVGL.IBindable.prototype.unbind = function () {
 /**
  * Renderable data linkable to {@link VVGL.SceneNode}
  * 
- * @interface
+ * @abstract
+ * @class
+ * @classdesc Renderable data.
+ * @param {string} type
  */
-VVGL.SceneData = function () {};
+VVGL.SceneData = function (type) {
+	this.type = type;
+};
+
+/**
+ * Return data type name.
+ * 
+ * @return {string} Data type.
+ */
+VVGL.SceneData.prototype.getType = function () {
+	return (this.type);
+};
 
 /**
  * Render function to override.
- * 
- * @param {VVGL.Renderer} renderer
  */
-VVGL.SceneData.prototype.render = function (renderer) {
+VVGL.SceneData.prototype.render = function () {
 	throw new VVGL.ImplementationException(this, "render", "SceneData");
 };
 
@@ -713,9 +725,10 @@ VVGL.fusionClasses = function (prototype1, prototype2) {
  * 
  * @class
  * @extends VVGL.EventsHandler
- * @implements VVGL.SceneData
+ * @extends VVGL.SceneData
  */
 VVGL.Camera = function () {
+	VVGL.SceneData.call(this, "camera");
 	VVGL.EventsHandler.call(this);
 	
 	this.perspective = new VVGL.Mat4();
@@ -812,9 +825,8 @@ VVGL.Camera.prototype.getView = function () {
  * No effect for camera.
  * 
  * @override
- * @param {VVGL.Renderer} renderer
  */
-VVGL.Camera.prototype.render = function (renderer) {};
+VVGL.Camera.prototype.render = function () {};
 /**
  * Camera with target fixed to a point,
  * With position turning around with mouse movements.
@@ -1389,6 +1401,135 @@ VVGL.Mat4.prototype.identity = function () {
 };
 
 /**
+ * Translate by a 3D-vector.
+ * 
+ * @param {VVGL.Vec3} vector Translation vector.
+ */
+VVGL.Mat4.prototype.translate = function (vector) {
+    var x = vector.x,
+    	y = vector.y,
+    	z = vector.z,
+    	data = this.data;
+
+    data[12] = data[0] * x + data[4] * y + data[8] * z + data[12];
+    data[13] = data[1] * x + data[5] * y + data[9] * z + data[13];
+    data[14] = data[2] * x + data[6] * y + data[10] * z + data[14];
+    data[15] = data[3] * x + data[7] * y + data[11] * z + data[15];
+};
+
+/**
+ * Rotate on X axis by an angle.
+ * 
+ * @param {number} angle Angle in radians.
+ * @todo precalc angles.
+ */
+VVGL.Mat4.prototype.rotateX = function (angle) {
+	var sinus = Math.sin(angle),
+		cosinus = Math.cos(angle),
+		data = this.data,
+        a10 = data[4],
+        a11 = data[5],
+        a12 = data[6],
+        a13 = data[7],
+        a20 = data[8],
+        a21 = data[9],
+        a22 = data[10],
+        a23 = data[11];
+
+    data[4] = a10 * cosinus + a20 * sinus;
+    data[5] = a11 * cosinus + a21 * sinus;
+    data[6] = a12 * cosinus + a22 * sinus;
+    data[7] = a13 * cosinus + a23 * sinus;
+    data[8] = a20 * cosinus - a10 * sinus;
+    data[9] = a21 * cosinus - a11 * sinus;
+    data[10] = a22 * cosinus - a12 * sinus;
+    data[11] = a23 * cosinus - a13 * sinus;
+};
+
+/**
+ * Rotate on Y axis by an angle.
+ * 
+ * @param {number} angle Angle in radians.
+ * @todo precalc angles.
+ */
+VVGL.Mat4.prototype.rotateY = function (angle) {
+    var sinus = Math.sin(angle),
+        cosinus = Math.cos(angle),
+        data = this.data,
+        a00 = data[0],
+        a01 = data[1],
+        a02 = data[2],
+        a03 = data[3],
+        a20 = data[8],
+        a21 = data[9],
+        a22 = data[10],
+        a23 = data[11];
+
+    data[0] = a00 * cosinus - a20 * sinus;
+    data[1] = a01 * cosinus - a21 * sinus;
+    data[2] = a02 * cosinus - a22 * sinus;
+    data[3] = a03 * cosinus - a23 * sinus;
+    data[8] = a00 * sinus + a20 * cosinus;
+    data[9] = a01 * sinus + a21 * cosinus;
+    data[10] = a02 * sinus + a22 * cosinus;
+    data[11] = a03 * sinus + a23 * cosinus;
+};
+
+/**
+ * Rotate on Z axis by an angle.
+ * 
+ * @param {number} angle Angle in radians.
+ * @todo precalc angles.
+ */
+VVGL.Mat4.prototype.rotateZ = function (angle) {
+    var sinus = Math.sin(angle),
+        cosinus = Math.cos(angle),
+        data = this.data,
+        a00 = data[0],
+        a01 = data[1],
+        a02 = data[2],
+        a03 = data[3],
+        a10 = data[4],
+        a11 = data[5],
+        a12 = data[6],
+        a13 = data[7];
+
+    data[0] = a00 * cosinus + a10 * sinus;
+    data[1] = a01 * cosinus + a11 * sinus;
+    data[2] = a02 * cosinus + a12 * sinus;
+    data[3] = a03 * cosinus + a13 * sinus;
+    data[4] = a10 * cosinus - a00 * sinus;
+    data[5] = a11 * cosinus - a01 * sinus;
+    data[6] = a12 * cosinus - a02 * sinus;
+    data[7] = a13 * cosinus - a03 * sinus;
+};
+
+/**
+ * Scale by a vector.
+ * 
+ * @param {VVGL.Vec3} vector
+ */
+VVGL.Mat4.prototype.scale = function (vector) {
+    var x = vector.x,
+    	y = vector.y,
+    	z = vector.z,
+    	data = this.data;
+
+    data[0] *= x;
+    data[1] *= x;
+    data[2] *= x;
+    data[3] *= x;
+    data[4] *= y;
+    data[5] *= y;
+    data[6] *= y;
+    data[7] *= y;
+    data[8] *= z;
+    data[9] *= z;
+    data[10] *= z;
+    data[11] *= z;
+};
+
+/**
  * Create a perspective projection matrix.
  * 
  * @param {number} angle Vertical field of view in radians.
@@ -1526,6 +1667,20 @@ VVGL.Mat4.prototype.clone = function () {
  */
 VVGL.Mat4.prototype.toArray = function () {
 	return (this.data);
+};
+
+/**
+ * Convert matrix data to a readable string.
+ * 
+ * @return {string}
+ */
+VVGL.Mat4.prototype.toString = function () {
+	var data = this.data;
+	
+	return ("(" + data[0] + "," + data[1] + "," + data[2] + "," + data[3] + ")\n" +
+			"(" + data[4] + "," + data[5] + "," + data[6] + "," + data[7] + ")\n" +
+			"(" + data[8] + "," + data[9] + "," + data[10] + "," + data[11] + ")\n" +
+			"(" + data[12] + "," + data[13] + "," + data[14] + "," + data[15] + ")\n");
 };
 /**
  * Maths help functions and numbers.
@@ -1751,9 +1906,11 @@ VVGL.ArrayBuffer.prototype.unbind = function () {
  * Represent a model.
  * 
  * @class
- * @implements {VVGL.SceneData}
+ * @extends VVGL.SceneData
+ * @param {VVGL.RenderMode} renderMode
  */
 VVGL.Mesh = function (renderMode) {
+	VVGL.SceneData.call(this, "mesh");
 	renderMode = VVGL.setIfUndefined(renderMode, VVGL.RenderMode.TRIANGLES);
 	
 	this.verticesBuffers = [];
@@ -1897,9 +2054,8 @@ VVGL.Mesh.prototype.setTexture = function (texture) {
  * Render mesh to scene, drawing parts.
  * 
  * @override
- * @param {VVGL.Renderer} renderer
  */
-VVGL.Mesh.prototype.render = function (renderer) {
+VVGL.Mesh.prototype.render = function () {
 	this.bindArrays();
 	{
 		if (this.indices === null) {
@@ -1922,6 +2078,71 @@ VVGL.Mesh.prototype.render = function (renderer) {
  */
 VVGL.Mesh.prototype.update = function (elapsedTime) {};
 /**
+ * Represent a frame rendering.
+ * Used by {@link VVGL.Renderer} to create a scene frame.
+ */
+VVGL.FrameRender = function () {
+	this.datas = [];
+	this.reset();
+};
+
+/**
+ * Reset frame render for new frame.
+ */
+VVGL.FrameRender.prototype.reset = function () {
+	this.datas["camera"]	= [];
+	this.datas["mesh"]		= [];
+};
+
+/**
+ * Add an {@link VVGL.SceneData} to render list.
+ * 
+ * @param {VVGL.SceneData} data
+ * @param {VVGL.Mat4} matrix Model matrix
+ */
+VVGL.FrameRender.prototype.addData = function (data, matrix) {
+	this.datas[data.getType()].push({
+		data: data,
+		matrix: matrix
+	});
+};
+
+/**
+ * Configure perspective and view matrices from active camera.
+ * 
+ * @private
+ * @param {VVGL.Camera} camera
+ * @todo alter camera view position from its model matrix.
+ */
+VVGL.FrameRender.prototype.configureFromCamera = function (activeCamera) {
+	for (var i in this.datas["camera"]) {
+		var camera = this.datas["camera"][i];
+		
+		if (camera.data === activeCamera) {
+			var program = VVGL.ShaderProgram.currentProgram;
+			program.setMatrix4Uniform("uPerspectiveMatrix", activeCamera.getPerspective());
+			program.setMatrix4Uniform("uViewMatrix", activeCamera.getView());
+		};
+	}
+};
+
+/**
+ * Render everything.
+ * 
+ * @param {VVGL.Camera} camera Active camera
+ */
+VVGL.FrameRender.prototype.render = function (camera) {
+	this.configureFromCamera(camera);
+	
+	for (var i in this.datas["mesh"]) {
+		var program = VVGL.ShaderProgram.currentProgram; // TODO one program by mesh possible.
+		var mesh = this.datas["mesh"][i];
+		program.setMatrix4Uniform("uModelMatrix", mesh.matrix);
+		
+		mesh.data.render();
+	}
+};
+/**
  * Webgl Renderer.
  * Graphics control panel.
  * Accessible directly from {@link VVGL.Application}.
@@ -1932,11 +2153,8 @@ VVGL.Renderer = function () {
 	gl.enable(gl.DEPTH_TEST);
 	this.backgroundColor = new VVGL.Color();
 	this.setBackgroundColor(VVGL.Color.black);
-	/*
-	this.perspective = new VVGL.PerspectiveMatrix();
-	this.view = new VVGL.ViewMatrix();
-	this.model = new VVGL.ModelMatrix();
-	*/
+	
+	this.frameRender = new VVGL.FrameRender();
 };
 
 /**
@@ -1965,19 +2183,20 @@ VVGL.Renderer.prototype.prepareFrame = function () {
  * @private
  */
 VVGL.Renderer.prototype.drawScene = function (scene) {
-	var program = VVGL.ShaderProgram.currentProgram;
-	var camera = scene.getActiveCamera();
+	this.frameRender.reset();
 	
+	var camera = scene.getActiveCamera();
 	if (camera === null) {
 		throw new VVGL.Exception("No active camera for scene rendering.");
 	}
 	
-	program.setMatrix4Uniform("uPerspectiveMatrix", camera.getPerspective());
-	program.setMatrix4Uniform("uViewMatrix", camera.getView());
-	
-	program.setMatrix4Uniform("uModelMatrix", new VVGL.Mat4());
-	
 	scene.getRoot().render(this);
+	
+	this.frameRender.render(camera);
+};
+
+VVGL.Renderer.prototype.addToRenderList = function (data, matrix) {
+	this.frameRender.addData(data, matrix);
 };
 /**
  * World scene.
@@ -2054,20 +2273,164 @@ VVGL.SceneManager.prototype.getCurrentScene = function () {
 	return (this.currentScene);
 };
 /**
+ * @class
+ * @classdesc Transformable element (base for {@link VVGL.SceneNode})
+ */
+VVGL.Transformable = function () {
+	this.position = VVGL.Transformable.prototype.position.clone();
+	this.rotation = VVGL.Transformable.prototype.rotation.clone();
+	this.scaleVector = VVGL.Transformable.prototype.scaleVector.clone();
+	this.matrix = new VVGL.Mat4();
+	this.upToDate = true;
+};
+
+/**
+ * Element position
+ * 
+ * @type {VVGL.Vec3}
+ * @default
+ */
+VVGL.Transformable.prototype.position = new VVGL.Vec3(0, 0, 0);
+
+/**
+ * Element rotation angles in radians.
+ * 
+ * @type {VVGL.Vec3}
+ * @default
+ */
+VVGL.Transformable.prototype.rotation = new VVGL.Vec3(0, 0, 0);
+
+/**
+ * Element scale ratios.
+ * 
+ * @type {VVGL.Vec3}
+ * @default
+ */
+VVGL.Transformable.prototype.scaleVector = new VVGL.Vec3(1, 1, 1);
+
+/**
+ * Translate element.
+ * 
+ * @param {number} x
+ * @param {number} y
+ * @param {number} z
+ */
+VVGL.Transformable.prototype.translate = function (x, y, z) {
+	this.upToDate = false;
+	this.position.x += x;
+	this.position.y += y;
+	this.position.z += z;
+};
+
+/**
+ * Translate element by vector.
+ * 
+ * @param {VVGL.Vec3} vector
+ */
+VVGL.Transformable.prototype.translateByVector = function (vector) {
+	this.upToDate = false;
+	this.position.add(vector);
+};
+
+/**
+ * Rotate element on X axis.
+ * 
+ * @param {number} angle Angle in radians.
+ */
+VVGL.Transformable.prototype.rotateX = function (angle) {
+	this.upToDate = false;
+	this.rotation.x += angle;
+};
+
+/**
+ * Rotate element on Y axis.
+ * 
+ * @param {number} angle Angle in radians.
+ */
+VVGL.Transformable.prototype.rotateY = function (angle) {
+	this.upToDate = false;
+	this.rotation.y += angle;
+};
+
+/**
+ * Rotate element on Z axis.
+ * 
+ * @param {number} angle Angle in radians.
+ */
+VVGL.Transformable.prototype.rotateZ = function (angle) {
+	this.upToDate = false;
+	this.rotation.z += angle;
+};
+
+/**
+ * Scale element size by number.
+ * 
+ * @param {number} n
+ */
+VVGL.Transformable.prototype.scaleByNumber = function (n) {
+	this.upToDate = false;
+	this.scaleVector.scale(n);
+};
+
+/**
+ * Scale element size by vector.
+ * 
+ * @param {VVGL.Vec3} vector
+ */
+VVGL.Transformable.prototype.scaleByVector = function (vector) {
+	this.upToDate = false;
+	this.scaleVector.x *= vector.x;
+	this.scaleVector.y *= vector.y;
+	this.scaleVector.z *= vector.z;
+};
+
+/**
+ * Calc model matrix from vectors.
+ * 
+ * @private
+ */
+VVGL.Transformable.prototype.calcMatrix = function () {
+	this.matrix.identity();
+	
+	this.matrix.translate(this.position);
+	this.matrix.scale(this.scaleVector);
+	this.matrix.rotateX(this.rotation.x);
+	this.matrix.rotateY(this.rotation.y);
+	this.matrix.rotateZ(this.rotation.z);
+};
+
+/**
+ * Calc if updated and return model matrix from vectors values.
+ * 
+ * @return {VVGL.Mat4} Model matrix.
+ */
+VVGL.Transformable.prototype.getMatrix = function () {
+	if (!this.upToDate) {
+		this.calcMatrix();
+		this.upToDate = true;
+	}
+	
+	return (this.matrix);
+};
+/**
  * The mother class for all node scene classes, including the scene root.
  * 
- * @class The mother class for all node scene classes.
- * @constructor
+ * @class
+ * @classdesc The mother class for all node scene classes.
+ * @extends VVGL.Transformable
  * @param {VVGL.SceneData} data Renderable data.
  * @param {VVGL.SceneNode} parent Node parent.
  */
 VVGL.SceneNode = function (data, parent) {
+	VVGL.Transformable.call(this);
 	data = VVGL.setIfUndefined(data, null);
 	parent = VVGL.setIfUndefined(parent, null);
 	this.data = data;
 	this.parent = parent;
 	this.children = [];
 };
+
+VVGL.SceneNode.prototype = Object.create(VVGL.Transformable.prototype);
 
 /**
  * Node data. Must be renderable (implementing a render function).
@@ -2091,7 +2454,7 @@ VVGL.SceneNode.prototype.parent = null;
  */
 VVGL.SceneNode.prototype.render = function (renderer) {
 	if (this.data !== null) {
-		this.data.render(renderer);
+		renderer.addToRenderList(this.data, this.getMatrix()); // TODO matrix
 	}
 	
 	for (var i in this.children) {

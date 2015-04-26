@@ -3,9 +3,10 @@
  * 
  * @class
  * @extends VVGL.EventsHandler
- * @implements VVGL.SceneData
+ * @extends VVGL.SceneData
  */
 VVGL.Camera = function () {
+	VVGL.SceneData.call(this, "camera");
 	VVGL.EventsHandler.call(this);
 	
 	this.perspective = new VVGL.Mat4();
@@ -102,6 +103,5 @@ VVGL.Camera.prototype.getView = function () {
  * No effect for camera.
  * 
  * @override
- * @param {VVGL.Renderer} renderer
  */
-VVGL.Camera.prototype.render = function (renderer) {};
+VVGL.Camera.prototype.render = function () {};

@@ -9,11 +9,8 @@ VVGL.Renderer = function () {
 	gl.enable(gl.DEPTH_TEST);
 	this.backgroundColor = new VVGL.Color();
 	this.setBackgroundColor(VVGL.Color.black);
-	/*
-	this.perspective = new VVGL.PerspectiveMatrix();
-	this.view = new VVGL.ViewMatrix();
-	this.model = new VVGL.ModelMatrix();
-	*/
+	
+	this.frameRender = new VVGL.FrameRender();
 };
 
 /**
@@ -42,17 +39,18 @@ VVGL.Renderer.prototype.prepareFrame = function () {
  * @private
  */
 VVGL.Renderer.prototype.drawScene = function (scene) {
-	var program = VVGL.ShaderProgram.currentProgram;
-	var camera = scene.getActiveCamera();
+	this.frameRender.reset();
 	
+	var camera = scene.getActiveCamera();
 	if (camera === null) {
 		throw new VVGL.Exception("No active camera for scene rendering.");
 	}
 	
-	program.setMatrix4Uniform("uPerspectiveMatrix", camera.getPerspective());
-	program.setMatrix4Uniform("uViewMatrix", camera.getView());
-	
-	program.setMatrix4Uniform("uModelMatrix", new VVGL.Mat4());
-	
 	scene.getRoot().render(this);
+	
+	this.frameRender.render(camera);
+};
+
+VVGL.Renderer.prototype.addToRenderList = function (data, matrix) {
+	this.frameRender.addData(data, matrix);
 };

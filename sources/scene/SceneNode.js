@@ -1,18 +1,22 @@
 /**
  * The mother class for all node scene classes, including the scene root.
  * 
- * @class The mother class for all node scene classes.
- * @constructor
+ * @class
+ * @classdesc The mother class for all node scene classes.
+ * @extends VVGL.Transformable
  * @param {VVGL.SceneData} data Renderable data.
  * @param {VVGL.SceneNode} parent Node parent.
  */
 VVGL.SceneNode = function (data, parent) {
+	VVGL.Transformable.call(this);
 	data = VVGL.setIfUndefined(data, null);
 	parent = VVGL.setIfUndefined(parent, null);
 	this.data = data;
 	this.parent = parent;
 	this.children = [];
 };
+
+VVGL.SceneNode.prototype = Object.create(VVGL.Transformable.prototype);
 
 /**
  * Node data. Must be renderable (implementing a render function).
@@ -36,7 +40,7 @@ VVGL.SceneNode.prototype.parent = null;
  */
 VVGL.SceneNode.prototype.render = function (renderer) {
 	if (this.data !== null) {
-		this.data.render(renderer);
+		renderer.addToRenderList(this.data, this.getMatrix()); // TODO matrix
 	}
 	
 	for (var i in this.children) {
