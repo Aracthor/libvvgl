@@ -12,7 +12,9 @@ VVGL.Mesh = function (renderMode) {
 	this.verticesBuffers = [];
 	this.useColor = false;
 	this.useTextureCoord = false;
+	this.useNormal = false;
 	this.texture = null;
+	this.shader = null;
 	this.indices = null;
 	
 	this.renderMode = renderMode;
@@ -65,6 +67,7 @@ VVGL.Mesh.prototype.bindArrays = function () {
 	var shader = VVGL.ShaderProgram.currentProgram;
 	shader.setBoolUniform("uUseColor", this.useColor);
 	shader.setBoolUniform("uUseTexture", this.useTextureCoord);
+	shader.setBoolUniform("uUseNormal", this.useNormal);
 	
 	if (this.useTextureCoord) {
 		if (this.texture === null) {
@@ -128,6 +131,19 @@ VVGL.Mesh.prototype.addTextureCoords = function (textureCoords) {
 };
 
 /**
+ * Create texture coords array buffer from texture coords data.
+ * 
+ * @param {Array} positions Float array.
+ */
+VVGL.Mesh.prototype.addNormals = function (normals) {
+	buffer = this.createFloatData(normals, 3);
+	buffer.linkToAttribute("aNormal");
+	
+	this.useNormal = true;
+	this.verticesBuffers.push(buffer);
+};
+
+/**
  * Create indices buffer from indices data.
  * 
  * @param {Array} indices Integer array.
@@ -147,6 +163,28 @@ VVGL.Mesh.prototype.setTexture = function (texture) {
 };
 
 /**
+ * Set shader program.
+ * 
+ * @param {VVGL.ShaderProgram} texture
+ */
+VVGL.Mesh.prototype.setShader = function (shader) {
+	this.shader = shader;
+};
+
+/**
+ * Return mesh shader.
+ * Throw an exception if no shader is linked.
+ * 
+ * @return {VVGL.ShaderProgram}
+ */
+VVGL.Mesh.prototype.getShader = function () {
+	if (this.shader === null) {
+		throw new VVGL.Exception("Missing shader for a mesh.");
+	}
+	return (this.shader);
+};
+
+/**
  * Render mesh to scene, drawing parts.
  * 
  * @override
@@ -155,9 +193,11 @@ VVGL.Mesh.prototype.render = function () {
 	this.bindArrays();
 	{
 		if (this.indices === null) {
+			VVGL.GLErrorException.checkError("drawArrays before");
 			gl.drawArrays(this.renderMode, 0, this.itemsNumber);
 			VVGL.GLErrorException.checkError("drawArrays");
 		} else {
+			VVGL.GLErrorException.checkError("drawElements before");
 			gl.drawElements(this.renderMode, this.itemsNumber, gl.UNSIGNED_SHORT, 0);
 			VVGL.GLErrorException.checkError("drawElements");
 		}

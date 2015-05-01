@@ -34,13 +34,30 @@ VVGL.SceneNode.prototype.data = null;
 VVGL.SceneNode.prototype.parent = null;
 
 /**
+ * Update node model matrix and its children model matrices.
+ * 
+ * @private
+ */
+VVGL.SceneNode.prototype.updateMatrix = function () {
+	var matrixMother = null;
+	if (this.parent !== null) {
+		matrixMother = this.parent.matrix;
+	}
+	this.calcMatrix(matrixMother);
+	
+	for (var i in this.children) {
+		this.children[i].updateMatrix();
+	}
+};
+
+/**
  * Render node and these children to display.
  * 
  * @param {VVGL.Renderer} renderer
  */
 VVGL.SceneNode.prototype.render = function (renderer) {
 	if (this.data !== null) {
-		renderer.addToRenderList(this.data, this.getMatrix()); // TODO matrix
+		renderer.addToRenderList(this.data, this.matrix);
 	}
 	
 	for (var i in this.children) {
@@ -54,6 +71,10 @@ VVGL.SceneNode.prototype.render = function (renderer) {
  * @param {number} elapsedTime Elapsed miliseconds from last frame.
  */
 VVGL.SceneNode.prototype.update = function (elapsedTime) {
+	if (!this.upToDate) {
+		this.updateMatrix();
+	}
+	
 	if (this.data !== null) {
 		this.data.update(elapsedTime);
 	}

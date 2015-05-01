@@ -93,7 +93,7 @@ VVGL.Transformable.prototype.rotateZ = function (angle) {
  * 
  * @param {number} n
  */
-VVGL.Transformable.prototype.scaleByNumber = function (n) {
+VVGL.Transformable.prototype.scale = function (n) {
 	this.upToDate = false;
 	this.scaleVector.scale(n);
 };
@@ -115,8 +115,12 @@ VVGL.Transformable.prototype.scaleByVector = function (vector) {
  * 
  * @private
  */
-VVGL.Transformable.prototype.calcMatrix = function () {
-	this.matrix.identity();
+VVGL.Transformable.prototype.calcMatrix = function (matrixMother) {
+	if (matrixMother) {
+		matrixMother.copyTo(this.matrix);
+	} else {
+		this.matrix.identity();
+	}
 	
 	this.matrix.translate(this.position);
 	this.matrix.scale(this.scaleVector);
@@ -126,15 +130,10 @@ VVGL.Transformable.prototype.calcMatrix = function () {
 };
 
 /**
- * Calc if updated and return model matrix from vectors values.
+ * Return model matrix from vectors values.
  * 
  * @return {VVGL.Mat4} Model matrix.
  */
 VVGL.Transformable.prototype.getMatrix = function () {
-	if (!this.upToDate) {
-		this.calcMatrix();
-		this.upToDate = true;
-	}
-	
 	return (this.matrix);
 };

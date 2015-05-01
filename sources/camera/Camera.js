@@ -96,12 +96,3 @@ VVGL.Camera.prototype.getView = function () {
 	this.view.lookAt(this.position, this.target, this.up);
 	return (this.view);
 };
-
-
-/**
- * Render object to scene.
- * No effect for camera.
- * 
- * @override
- */
-VVGL.Camera.prototype.render = function () {};

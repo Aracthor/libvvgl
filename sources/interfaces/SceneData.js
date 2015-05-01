@@ -5,6 +5,7 @@
  * @class
  * @classdesc Renderable data.
  * @param {string} type
+ * @todo pass to another folder.
  */
 VVGL.SceneData = function (type) {
 	this.type = type;
@@ -17,13 +18,6 @@ VVGL.SceneData = function (type) {
  */
 VVGL.SceneData.prototype.getType = function () {
 	return (this.type);
-};
-
-/**
- * Render function to override.
- */
-VVGL.SceneData.prototype.render = function () {
-	throw new VVGL.ImplementationException(this, "render", "SceneData");
 };
 
 /**

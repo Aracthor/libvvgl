@@ -6,7 +6,9 @@
  * @class
  */
 VVGL.Renderer = function () {
-	gl.enable(gl.DEPTH_TEST);
+	this.enableDepth();
+	this.enableBackfaceCulling();
+	gl.enable(gl.CULL_FACE);
 	this.backgroundColor = new VVGL.Color();
 	this.setBackgroundColor(VVGL.Color.black);
 	
@@ -29,7 +31,12 @@ VVGL.Renderer.prototype.setBackgroundColor = function (color) {
  * @private
  */
 VVGL.Renderer.prototype.prepareFrame = function () {
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	var clearMask = gl.COLOR_BUFFER_BIT;
+	
+	if (this.depthTest) {
+		clearMask |= gl.DEPTH_BUFFER_BIT;
+	}
+	gl.clear(clearMask);
 };
 
 /**
@@ -51,6 +58,64 @@ VVGL.Renderer.prototype.drawScene = function (scene) {
 	this.frameRender.render(camera);
 };
 
+/**
+ * Add renderable object to render list for next frame.
+ * 
+ * @param {VVGL.IRenderable} data Renderable node data.
+ * @param {VVGL.Mat4} matrix Element's model matrix.
+ */
 VVGL.Renderer.prototype.addToRenderList = function (data, matrix) {
 	this.frameRender.addData(data, matrix);
+};
+
+/**
+ * Active depth mode.
+ * Enabled by default.
+ */
+VVGL.Renderer.prototype.enableDepth = function () {
+	this.depthTest = true;
+	gl.enable(gl.DEPTH_TEST);
+};
+
+/**
+ * Check if depth mode is enabled.
+ * 
+ * @return {boolean}
+ */
+VVGL.Renderer.prototype.isDepthEnabled = function () {
+	return (this.depthTest);
+};
+
+/**
+ * Disable depth mode.
+ */
+VVGL.Renderer.prototype.disableDepth = function () {
+	this.depthTest = false;
+	gl.disable(gl.DEPTH_TEST);
+};
+
+/**
+ * Check if backface culling is enabled.
+ * 
+ * @return {boolean}
+ */
+VVGL.Renderer.prototype.isDepthEnabled = function () {
+	return (this.depthTest);
+};
+
+/**
+ * Active backface culling.
+ * Enabled by default.
+ */
+VVGL.Renderer.prototype.enableBackfaceCulling = function () {
+	this.backfaceCulling = true;
+	gl.enable(gl.CULL_FACE);
+};
+
+/**
+ * Disable backface culling.
+ */
+VVGL.Renderer.prototype.disableBackfaceCulling = function () {
+	this.depthTest = false;
+	gl.disable(gl.CULL_FACE);
 };

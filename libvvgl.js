@@ -119,6 +119,7 @@ VVGL.IBindable.prototype.unbind = function () {
  * @class
  * @classdesc Renderable data.
  * @param {string} type
+ * @todo pass to another folder.
  */
 VVGL.SceneData = function (type) {
 	this.type = type;
@@ -131,13 +132,6 @@ VVGL.SceneData = function (type) {
  */
 VVGL.SceneData.prototype.getType = function () {
 	return (this.type);
-};
-
-/**
- * Render function to override.
- */
-VVGL.SceneData.prototype.render = function () {
-	throw new VVGL.ImplementationException(this, "render", "SceneData");
 };
 
 /**
@@ -639,7 +633,7 @@ VVGL.Application.prototype.lockPointer = function () {
 /**
  * Disable mouse lock.
  * 
- * @todo todo.
+ * @todo unlock pointer for real.
  */
 VVGL.Application.prototype.unlockPointer = function () {
 	this.eventsManager.wantMouseLocked = false;
@@ -818,15 +812,6 @@ VVGL.Camera.prototype.getView = function () {
 	this.view.lookAt(this.position, this.target, this.up);
 	return (this.view);
 };
-
-
-/**
- * Render object to scene.
- * No effect for camera.
- * 
- * @override
- */
-VVGL.Camera.prototype.render = function () {};
 /**
  * Camera with target fixed to a point,
  * With position turning around with mouse movements.
@@ -1377,6 +1362,327 @@ VVGL.ImplementationException.prototype.what = function () {
 	return (VVGL.Exception.prototype.what.call(this));
 };
 /**
+ * @class
+ * @extends VVGL.SceneData
+ * @classdesc Abstract base class for all lights.
+ * @param {string} name Uniform name in shader.
+ */
+VVGL.Light = function (name) {
+	VVGL.SceneData.call(this, "light");
+	this.name = name;
+	this.color = VVGL.Color.white.clone();
+};
+
+VVGL.Light.prototype = Object.create(VVGL.SceneData.prototype);
+
+/**
+ * @type {VVGL.Color}
+ * @default
+ */
+VVGL.Light.prototype.color = VVGL.Color.white;
+
+/**
+ * Send light data to shader.
+ * 
+ * @abstract
+ * @param {VVGL.ShaderProgram} shader
+ */
+VVGL.Light.prototype.sendToShader = function (shader) {
+	throw VVGL.ImplementationException(this, "sendToShader", "Light");
+};
+/**
+ * @class
+ * @classdesc Minimum light level for all vertices.
+ * @extends VVGL.Light
+ * @param {string} name Uniform name in shader.
+ */
+VVGL.AmbianceLight = function (name) {
+	VVGL.Light.call(this, name);
+};
+
+VVGL.AmbianceLight.prototype = Object.create(VVGL.Light.prototype);
+
+/**
+ * Send data to shader.
+ * 
+ * @override
+ * @param {VVGL.ShaderProgram} shader
+ */
+VVGL.AmbianceLight.prototype.sendToShader = function (shader) {
+	shader.setColorUniform(this.name + ".color", this.color);
+};
+
+/**
+ * Do nothing for ambiance light.
+ * 
+ * @param {number} elapsedTime Elapsed miliseconds from last frame.
+ */
+VVGL.AmbianceLight.prototype.update = function (elapsedTime) {};
+/**
+ * @class
+ * @classdesc Light from a specific Direction.
+ * @extends VVGL.Light
+ * @param {string} name Uniform name in shader.
+ */
+VVGL.DirectionLight = function (name) {
+	VVGL.Light.call(this, name);
+	this.direction = new VVGL.Vec3();
+};
+
+VVGL.DirectionLight.prototype = Object.create(VVGL.Light.prototype);
+
+/**
+ * @type {VVGL.Vec3}
+ */
+VVGL.DirectionLight.prototype.direction = null;
+
+/**
+ * Send data to shader.
+ * 
+ * @override
+ * @param {VVGL.ShaderProgram} shader
+ */
+VVGL.DirectionLight.prototype.sendToShader = function (shader) {
+	shader.setColorUniform(this.name + ".color", this.color);
+	shader.setVector3Uniform(this.name + ".direction", this.direction);
+};
+
+/**
+ * Do nothing for direction light.
+ * 
+ * @todo maybe update direction ?
+ * @param {number} elapsedTime Elapsed miliseconds from last frame.
+ */
+VVGL.DirectionLight.prototype.update = function (elapsedTime) {};
+/**
+ * @class
+ * @classdesc Light from a specific spot.
+ * @extends VVGL.Light
+ * @param {string} name Uniform name in shader.
+ */
+VVGL.SpotLight = function (name) {
+	VVGL.Light.call(this, name);
+	this.position = new VVGL.Vec3();
+};
+
+VVGL.SpotLight.prototype = Object.create(VVGL.Light.prototype);
+
+/**
+ * @type {VVGL.Vec3}
+ */
+VVGL.SpotLight.prototype.position = null;
+
+/**
+ * @type {VVGL.Vec4}
+ * @default
+ */
+VVGL.SpotLight.prototype.power = 1.0;
+
+/**
+ * Send data to shader.
+ * 
+ * @override
+ * @param {VVGL.ShaderProgram} shader
+ */
+VVGL.SpotLight.prototype.sendToShader = function (shader) {
+	shader.setFloatUniform(this.name + ".power", this.power);
+	shader.setColorUniform(this.name + ".color", this.color);
+	shader.setVector3Uniform(this.name + ".position", this.position);
+};
+
+/**
+ * Update light position from model matrix.
+ * 
+ * @todo update position
+ * @param {number} elapsedTime Elapsed miliseconds from last frame.
+ */
+VVGL.SpotLight.prototype.update = function (elapsedTime) {
+};
+/**
+ * A 4x4 float matrix.
+ * Created as an identity matrix.
+ * 
+ * @class
+ */
+VVGL.Mat3 = function () {
+	this.data = new Float32Array(3 * 3);
+	
+	this.identity();
+};
+
+/**
+ * Set a Mat3 to the identity matrix.
+ */
+VVGL.Mat3.prototype.identity = function () {
+	var data = this.data;
+	
+	data[0] = 1; data[1] = 0; data[2] = 0;
+	data[3] = 0; data[4] = 1; data[5] = 0;
+	data[6] = 0; data[7] = 0; data[8] = 1;
+};
+
+/**
+ * Copy matrix data to another preallocated matrix object.
+ * 
+ * @param {VVGL.Mat3} destination
+ */
+VVGL.Mat3.prototype.copyTo = function (destination) {
+	for (var i = 0; i < 9; ++i) {
+		destination.data[i] = this.data[i];
+	}
+};
+
+/**
+ * Return a copy of this matrix.
+ * 
+ * @return {VVGL.Mat3} Copy.
+ */
+VVGL.Mat3.prototype.clone = function () {
+	var clone = new VVGL.Mat3();
+	
+	this.copyTo(clone);
+	
+	return (clone);
+};
+
+/**
+ * Copy 4x4 matrix content to 3x3 matrix.
+ * 
+ * @param {VVGL.Mat4} matrix
+ */
+VVGL.Mat3.prototype.fromMat4 = function (matrix) {
+	var dest = this.data;
+	var src = matrix.data;
+	
+	dest[0] = src[ 0];
+	dest[1] = src[ 1];
+	dest[2] = src[ 2];
+	dest[3] = src[ 4];
+	dest[4] = src[ 5];
+	dest[5] = src[ 6];
+	dest[6] = src[ 8];
+	dest[7] = src[ 9];
+	dest[8] = src[10];
+};
+
+/**
+ * Convert 4x4 matrix to 3x3 normal matrix.
+ * 
+ * @param {VVGL.Mat4} matrix Model matrix.
+ */
+VVGL.Mat3.prototype.normalFromMat4 = function (matrix) {
+    var dest = this.data,
+    	src = matrix.data,
+    	a00 = src[0], a01 = src[1], a02 = src[2], a03 = src[3],
+        a10 = src[4], a11 = src[5], a12 = src[6], a13 = src[7],
+        a20 = src[8], a21 = src[9], a22 = src[10], a23 = src[11],
+        a30 = src[12], a31 = src[13], a32 = src[14], a33 = src[15],
+
+        b00 = a00 * a11 - a01 * a10,
+        b01 = a00 * a12 - a02 * a10,
+        b02 = a00 * a13 - a03 * a10,
+        b03 = a01 * a12 - a02 * a11,
+        b04 = a01 * a13 - a03 * a11,
+        b05 = a02 * a13 - a03 * a12,
+        b06 = a20 * a31 - a21 * a30,
+        b07 = a20 * a32 - a22 * a30,
+        b08 = a20 * a33 - a23 * a30,
+        b09 = a21 * a32 - a22 * a31,
+        b10 = a21 * a33 - a23 * a31,
+        b11 = a22 * a33 - a23 * a32,
+
+        delta = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+
+    if (delta === 0) { 
+        throw new VVGL.Exception("MATHS ERROR: Null determinant calculing normal matrix."); 
+    }
+    delta = 1.0 / delta;
+
+    dest[0] = (a11 * b11 - a12 * b10 + a13 * b09) * delta;
+    dest[1] = (a12 * b08 - a10 * b11 - a13 * b07) * delta;
+    dest[2] = (a10 * b10 - a11 * b08 + a13 * b06) * delta;
+
+    dest[3] = (a02 * b10 - a01 * b11 - a03 * b09) * delta;
+    dest[4] = (a00 * b11 - a02 * b08 + a03 * b07) * delta;
+    dest[5] = (a01 * b08 - a00 * b10 - a03 * b06) * delta;
+
+    dest[6] = (a31 * b05 - a32 * b04 + a33 * b03) * delta;
+    dest[7] = (a32 * b02 - a30 * b05 - a33 * b01) * delta;
+    dest[8] = (a30 * b04 - a31 * b02 + a33 * b00) * delta;
+};
+
+/**
+ * Transpose matrix data.
+ * (Vertical become horizontal).
+ */
+VVGL.Mat3.prototype.transpose = function () {
+	var data = this.data,
+		data01 = data[1],
+		data02 = data[2],
+		data12 = data[5];
+		
+	data[1] = data[3];
+	data[2] = data[6];
+	data[3] = data01;
+	data[5] = data[7];
+	data[6] = data02;
+	data[7] = data12;
+};
+
+/**
+ * Invert matrix data.
+ */
+VVGL.Mat3.prototype.invert = function () {
+	var data = this.data,
+		a00 = data[0], a01 = data[1], a02 = data[2],
+        a10 = data[3], a11 = data[4], a12 = data[5],
+        a20 = data[6], a21 = data[7], a22 = data[8],
+        
+        b01 = a22 * a11 - a12 * a21,
+        b11 = -a22 * a10 + a12 * a20,
+        b21 = a21 * a10 - a11 * a20,
+        
+        delta = a00 * b01 + a01 * b11 + a02 * b21;
+        
+    if (delta === 0) {
+    	throw new VVGL.Exception("MATHS ERROR: Error inversing Mat3: null deteminent");
+    }
+    
+    delta = 1.0 / delta;
+    
+    data[0] = b01 * delta;
+    data[1] = (-a22 * a01 + a02 * a21) * delta;
+    data[2] = (a12 * a01 - a02 * a11) * delta;
+    data[3] = b11 * delta;
+    data[4] = (a22 * a00 - a02 * a20) * delta;
+    data[5] = (-a12 * a00 + a02 * a10) * delta;
+    data[6] = b21 * delta;
+    data[7] = (-a21 * a00 + a01 * a20) * delta;
+    data[8] = (a11 * a00 - a01 * a10) * delta;
+};
+
+/**
+ * Return matrix data as float array.
+ * 
+ * @return {Array} data as float array.
+ */
+VVGL.Mat3.prototype.toArray = function () {
+	return (this.data);
+};
+
+/**
+ * Convert matrix data to a readable string.
+ * 
+ * @return {string}
+ */
+VVGL.Mat3.prototype.toString = function () {
+	var data = this.data;
+	
+	return ("(" + data[0] + "," + data[1] + "," + data[2] + ")\n" +
+			"(" + data[3] + "," + data[4] + "," + data[5] + ")\n" +
+			"(" + data[6] + "," + data[7] + "," + data[8] + ")\n");
+};
+/**
  * A 4x4 float matrix.
  * Created as an identity matrix.
  * 
@@ -1530,6 +1836,45 @@ VVGL.Mat4.prototype.scale = function (vector) {
 };
 
 /**
+ * Multiply matrix by another.
+ * 
+ * @param {VVGL.Mat4} matrix
+ */
+VVGL.Mat4.prototype.multiply = function (matrix) {
+    var data = this.data,
+    	b = matrix.data,
+    	a00 =  data[0], a01 =  data[1], a02 =  data[2], a03 =  data[3],
+        a10 =  data[4], a11 =  data[5], a12 =  data[6], a13 =  data[7],
+        a20 =  data[8], a21 =  data[9], a22 =  data[10], a23 =  data[11],
+        a30 =  data[12], a31 =  data[13], a32 =  data[14], a33 =  data[15];
+
+    // Cache only the current line of the second matrix
+    var b0  =  b[0], b1 =  b[1], b2 =  b[2], b3 =  b[3];  
+     data[0] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+     data[1] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+     data[2] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+     data[3] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+
+    b0 =  b[4]; b1 =  b[5]; b2 =  b[6]; b3 =  b[7];
+     data[4] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+     data[5] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+     data[6] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+     data[7] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+
+    b0 =  b[8]; b1 =  b[9]; b2 =  b[10]; b3 =  b[11];
+     data[8] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+     data[9] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+     data[10] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+     data[11] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+
+    b0 =  b[12]; b1 =  b[13]; b2 =  b[14]; b3 =  b[15];
+     data[12] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+     data[13] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+     data[14] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+     data[15] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+};
+
+/**
  * Create a perspective projection matrix.
  * 
  * @param {number} angle Vertical field of view in radians.
@@ -1648,6 +1993,17 @@ VVGL.Mat4.prototype.lookAt = function (position, target, up) {
 };
 
 /**
+ * Copy matrix data to another preallocated matrix object.
+ * 
+ * @param {VVGL.Mat4} destination
+ */
+VVGL.Mat4.prototype.copyTo = function (destination) {
+	for (var i = 0; i < 16; ++i) {
+		destination.data[i] = this.data[i];
+	}
+};
+
+/**
  * Return a copy of this matrix.
  * 
  * @return {VVGL.Mat4} Copy.
@@ -1655,7 +2011,7 @@ VVGL.Mat4.prototype.lookAt = function (position, target, up) {
 VVGL.Mat4.prototype.clone = function () {
 	var clone = new VVGL.Mat4();
 	
-	clone.data = this.data.slice();
+	this.copyTo(clone);
 	
 	return (clone);
 };
@@ -1840,6 +2196,137 @@ VVGL.Vec3.crossProduct = function (u, v) {
 						  u.x * v.y - u.y * v.x));
 };
 /**
+ * A 4-dimensional vector.
+ * 
+ * @class A 4-dimensional vector.
+ * @constructor
+ * @param {number} x X-axis value.
+ * @param {number} y Y-axis value.
+ * @param {number} z Z-axis value.
+ * @param {number} w W-axis value.
+ */
+VVGL.Vec4 = function (x, y, z, w) {
+	if (x !== undefined) {
+		this.x = x;
+		this.y = y;
+		this.z = z;
+		this.w = w;
+	}
+};
+
+/**
+ * X-axis value.
+ * 
+ * @type {number}
+ */
+VVGL.Vec4.prototype.x = 0.0;
+
+/**
+ * Y-axis value.
+ * 
+ * @type {number}
+ */
+VVGL.Vec4.prototype.y = 0.0;
+
+/**
+ * Z-axis value.
+ * 
+ * @type {number}
+ */
+VVGL.Vec4.prototype.z = 0.0;
+
+/**
+ * W-axis value.
+ * 
+ * @type {number}
+ */
+VVGL.Vec4.prototype.w = 0.0;
+
+
+/**
+ * Add another vector to this one.
+ * 
+ * @param {VVGL.Vec4} vector
+ */
+VVGL.Vec4.prototype.add = function (vector) {
+	this.x += vector.x;
+	this.y += vector.y;
+	this.z += vector.z;
+	this.w += vector.w;
+};
+
+/**
+ * Substract another vector to this one.
+ * 
+ * @param {VVGL.Vec4} vector
+ */
+VVGL.Vec4.prototype.sub = function (vector) {
+	this.x -= vector.x;
+	this.y -= vector.y;
+	this.z -= vector.z;
+	this.w -= vector.w;
+};
+
+/**
+ * Scale vector by a number.
+ * 
+ * @param {number} n
+ */
+VVGL.Vec4.prototype.scale = function (n) {
+	this.x *= n;
+	this.y *= n;
+	this.z *= n;
+	this.w *= w;
+};
+
+/**
+ * Copy vector data to another.
+ * 
+ * @param {VVGL.Vec4} vector
+ */
+VVGL.Vec4.prototype.copyTo = function (vector) {
+	vector.x = this.x;
+	vector.y = this.y;
+	vector.z = this.z;
+	vector.w = this.w;
+};
+
+/**
+ * Calc and return vector's norm.
+ * 
+ * @return {number} Vector's norm.
+ */
+VVGL.Vec4.prototype.getNorm = function () {
+	return (Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w));
+};
+
+/**
+ * Normalize vector, making its norm to 1.
+ */
+VVGL.Vec4.prototype.normalize = function () {
+	var norm = this.getNorm();
+	this.scale(1 / norm);
+};
+
+/**
+ * Create copy of this vector.
+ * 
+ * @return {VVGL.Vec4} Copy.
+ */
+VVGL.Vec4.prototype.clone = function () {
+	return (new VVGL.Vec4(this.x, this.y, this.z, this.w));
+};
+
+/**
+ * Convert vector to a data array.
+ * 
+ * @return {Array} A float array containing the three vector's values.
+ */
+VVGL.Vec4.prototype.toArray = function () {
+	return ([this.x, this.y, this.z, this.w]);
+};
+
+/**
  * OpenGL buffer to store mesh data.
  * Can be a vertice feature (position, color, textureCoord or normal) or Element indices.
  * 
@@ -1916,7 +2403,9 @@ VVGL.Mesh = function (renderMode) {
 	this.verticesBuffers = [];
 	this.useColor = false;
 	this.useTextureCoord = false;
+	this.useNormal = false;
 	this.texture = null;
+	this.shader = null;
 	this.indices = null;
 	
 	this.renderMode = renderMode;
@@ -1969,6 +2458,7 @@ VVGL.Mesh.prototype.bindArrays = function () {
 	var shader = VVGL.ShaderProgram.currentProgram;
 	shader.setBoolUniform("uUseColor", this.useColor);
 	shader.setBoolUniform("uUseTexture", this.useTextureCoord);
+	shader.setBoolUniform("uUseNormal", this.useNormal);
 	
 	if (this.useTextureCoord) {
 		if (this.texture === null) {
@@ -2032,6 +2522,19 @@ VVGL.Mesh.prototype.addTextureCoords = function (textureCoords) {
 };
 
 /**
+ * Create texture coords array buffer from texture coords data.
+ * 
+ * @param {Array} positions Float array.
+ */
+VVGL.Mesh.prototype.addNormals = function (normals) {
+	buffer = this.createFloatData(normals, 3);
+	buffer.linkToAttribute("aNormal");
+	
+	this.useNormal = true;
+	this.verticesBuffers.push(buffer);
+};
+
+/**
  * Create indices buffer from indices data.
  * 
  * @param {Array} indices Integer array.
@@ -2051,6 +2554,28 @@ VVGL.Mesh.prototype.setTexture = function (texture) {
 };
 
 /**
+ * Set shader program.
+ * 
+ * @param {VVGL.ShaderProgram} texture
+ */
+VVGL.Mesh.prototype.setShader = function (shader) {
+	this.shader = shader;
+};
+
+/**
+ * Return mesh shader.
+ * Throw an exception if no shader is linked.
+ * 
+ * @return {VVGL.ShaderProgram}
+ */
+VVGL.Mesh.prototype.getShader = function () {
+	if (this.shader === null) {
+		throw new VVGL.Exception("Missing shader for a mesh.");
+	}
+	return (this.shader);
+};
+
+/**
  * Render mesh to scene, drawing parts.
  * 
  * @override
@@ -2059,9 +2584,11 @@ VVGL.Mesh.prototype.render = function () {
 	this.bindArrays();
 	{
 		if (this.indices === null) {
+			VVGL.GLErrorException.checkError("drawArrays before");
 			gl.drawArrays(this.renderMode, 0, this.itemsNumber);
 			VVGL.GLErrorException.checkError("drawArrays");
 		} else {
+			VVGL.GLErrorException.checkError("drawElements before");
 			gl.drawElements(this.renderMode, this.itemsNumber, gl.UNSIGNED_SHORT, 0);
 			VVGL.GLErrorException.checkError("drawElements");
 		}
@@ -2091,7 +2618,46 @@ VVGL.FrameRender = function () {
  */
 VVGL.FrameRender.prototype.reset = function () {
 	this.datas["camera"]	= [];
+	this.datas["light"]		= [];
 	this.datas["mesh"]		= [];
+};
+
+/**
+ * Add lights datas to shader program.
+ * 
+ * @private
+ * @param {VVGL.ShaderProgram} shader
+ */
+VVGL.FrameRender.prototype.addLights = function (shader) {
+	for (var i in this.datas["light"]) {
+		var light = this.datas["light"][i];
+		
+		light.sendToShader(shader);
+	}
+};
+
+/**
+ * Get mesh list linked to shader.
+ * Create list and add it to meshes list if it doesn't exist.
+ * 
+ * @private
+ * @param {VVGL.ShaderProgram} shader
+ * @return {Object} Meshes list.
+ */
+VVGL.FrameRender.prototype.findShaderMeshList = function (shader) {
+	for (var i in this.datas["mesh"]) {
+		var meshes = this.datas["mesh"][i];
+		if (meshes.shader === shader) {
+			return (meshes);
+		}
+	}
+	
+	var meshes = {
+		shader: shader,
+		list: []
+	};
+	this.datas["mesh"].push(meshes);
+	return (meshes);
 };
 
 /**
@@ -2101,10 +2667,16 @@ VVGL.FrameRender.prototype.reset = function () {
  * @param {VVGL.Mat4} matrix Model matrix
  */
 VVGL.FrameRender.prototype.addData = function (data, matrix) {
-	this.datas[data.getType()].push({
-		data: data,
-		matrix: matrix
-	});
+	if (data.getType() == "mesh") {
+		var datas = this.findShaderMeshList(data.getShader());
+		
+		datas.list.push({
+			matrix: matrix,
+			data: data
+		});
+	} else {
+		this.datas[data.getType()].push(data);
+	}
 };
 
 /**
@@ -2112,18 +2684,14 @@ VVGL.FrameRender.prototype.addData = function (data, matrix) {
  * 
  * @private
  * @param {VVGL.Camera} camera
- * @todo alter camera view position from its model matrix.
+ * @return {VVGL.Mat4} View matrix
  */
 VVGL.FrameRender.prototype.configureFromCamera = function (activeCamera) {
-	for (var i in this.datas["camera"]) {
-		var camera = this.datas["camera"][i];
-		
-		if (camera.data === activeCamera) {
-			var program = VVGL.ShaderProgram.currentProgram;
-			program.setMatrix4Uniform("uPerspectiveMatrix", activeCamera.getPerspective());
-			program.setMatrix4Uniform("uViewMatrix", activeCamera.getView());
-		};
-	}
+	var program = VVGL.ShaderProgram.currentProgram;
+	program.setMatrix4Uniform("uPerspectiveMatrix", activeCamera.getPerspective());
+	program.setMatrix4Uniform("uViewMatrix", activeCamera.getView());
+	
+	return (activeCamera.getView());
 };
 
 /**
@@ -2132,14 +2700,28 @@ VVGL.FrameRender.prototype.configureFromCamera = function (activeCamera) {
  * @param {VVGL.Camera} camera Active camera
  */
 VVGL.FrameRender.prototype.render = function (camera) {
-	this.configureFromCamera(camera);
+	var viewMatrix = this.configureFromCamera(camera);
+	var modelViewMatrix = new VVGL.Mat4();
+	var normalMatrix = new VVGL.Mat3();
 	
 	for (var i in this.datas["mesh"]) {
-		var program = VVGL.ShaderProgram.currentProgram; // TODO one program by mesh possible.
-		var mesh = this.datas["mesh"][i];
-		program.setMatrix4Uniform("uModelMatrix", mesh.matrix);
+		var meshes = this.datas["mesh"][i];
+		var program = meshes.shader;
+		var list = meshes.list;
+		program.bind();
 		
-		mesh.data.render();
+		this.addLights(program);
+		
+		for (var i in list) {
+			var mesh = list[i];
+			
+			normalMatrix.normalFromMat4(mesh.matrix);
+			normalMatrix.transpose();
+			
+			program.setMatrix4Uniform("uModelMatrix", mesh.matrix);
+			program.setMatrix3Uniform("uNormalMatrix", normalMatrix);
+			mesh.data.render();
+		}
 	}
 };
 /**
@@ -2150,7 +2732,9 @@ VVGL.FrameRender.prototype.render = function (camera) {
  * @class
  */
 VVGL.Renderer = function () {
-	gl.enable(gl.DEPTH_TEST);
+	this.enableDepth();
+	this.enableBackfaceCulling();
+	gl.enable(gl.CULL_FACE);
 	this.backgroundColor = new VVGL.Color();
 	this.setBackgroundColor(VVGL.Color.black);
 	
@@ -2173,7 +2757,12 @@ VVGL.Renderer.prototype.setBackgroundColor = function (color) {
  * @private
  */
 VVGL.Renderer.prototype.prepareFrame = function () {
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	var clearMask = gl.COLOR_BUFFER_BIT;
+	
+	if (this.depthTest) {
+		clearMask |= gl.DEPTH_BUFFER_BIT;
+	}
+	gl.clear(clearMask);
 };
 
 /**
@@ -2195,8 +2784,66 @@ VVGL.Renderer.prototype.drawScene = function (scene) {
 	this.frameRender.render(camera);
 };
 
+/**
+ * Add renderable object to render list for next frame.
+ * 
+ * @param {VVGL.IRenderable} data Renderable node data.
+ * @param {VVGL.Mat4} matrix Element's model matrix.
+ */
 VVGL.Renderer.prototype.addToRenderList = function (data, matrix) {
 	this.frameRender.addData(data, matrix);
+};
+
+/**
+ * Active depth mode.
+ * Enabled by default.
+ */
+VVGL.Renderer.prototype.enableDepth = function () {
+	this.depthTest = true;
+	gl.enable(gl.DEPTH_TEST);
+};
+
+/**
+ * Check if depth mode is enabled.
+ * 
+ * @return {boolean}
+ */
+VVGL.Renderer.prototype.isDepthEnabled = function () {
+	return (this.depthTest);
+};
+
+/**
+ * Disable depth mode.
+ */
+VVGL.Renderer.prototype.disableDepth = function () {
+	this.depthTest = false;
+	gl.disable(gl.DEPTH_TEST);
+};
+
+/**
+ * Check if backface culling is enabled.
+ * 
+ * @return {boolean}
+ */
+VVGL.Renderer.prototype.isDepthEnabled = function () {
+	return (this.depthTest);
+};
+
+/**
+ * Active backface culling.
+ * Enabled by default.
+ */
+VVGL.Renderer.prototype.enableBackfaceCulling = function () {
+	this.backfaceCulling = true;
+	gl.enable(gl.CULL_FACE);
+};
+
+/**
+ * Disable backface culling.
+ */
+VVGL.Renderer.prototype.disableBackfaceCulling = function () {
+	this.depthTest = false;
+	gl.disable(gl.CULL_FACE);
 };
 /**
  * World scene.
@@ -2367,7 +3014,7 @@ VVGL.Transformable.prototype.rotateZ = function (angle) {
  * 
  * @param {number} n
  */
-VVGL.Transformable.prototype.scaleByNumber = function (n) {
+VVGL.Transformable.prototype.scale = function (n) {
 	this.upToDate = false;
 	this.scaleVector.scale(n);
 };
@@ -2389,8 +3036,12 @@ VVGL.Transformable.prototype.scaleByVector = function (vector) {
  * 
  * @private
  */
-VVGL.Transformable.prototype.calcMatrix = function () {
-	this.matrix.identity();
+VVGL.Transformable.prototype.calcMatrix = function (matrixMother) {
+	if (matrixMother) {
+		matrixMother.copyTo(this.matrix);
+	} else {
+		this.matrix.identity();
+	}
 	
 	this.matrix.translate(this.position);
 	this.matrix.scale(this.scaleVector);
@@ -2400,16 +3051,11 @@ VVGL.Transformable.prototype.calcMatrix = function () {
 };
 
 /**
- * Calc if updated and return model matrix from vectors values.
+ * Return model matrix from vectors values.
  * 
  * @return {VVGL.Mat4} Model matrix.
  */
 VVGL.Transformable.prototype.getMatrix = function () {
-	if (!this.upToDate) {
-		this.calcMatrix();
-		this.upToDate = true;
-	}
-	
 	return (this.matrix);
 };
 /**
@@ -2448,13 +3094,30 @@ VVGL.SceneNode.prototype.data = null;
 VVGL.SceneNode.prototype.parent = null;
 
 /**
+ * Update node model matrix and its children model matrices.
+ * 
+ * @private
+ */
+VVGL.SceneNode.prototype.updateMatrix = function () {
+	var matrixMother = null;
+	if (this.parent !== null) {
+		matrixMother = this.parent.matrix;
+	}
+	this.calcMatrix(matrixMother);
+	
+	for (var i in this.children) {
+		this.children[i].updateMatrix();
+	}
+};
+
+/**
  * Render node and these children to display.
  * 
  * @param {VVGL.Renderer} renderer
  */
 VVGL.SceneNode.prototype.render = function (renderer) {
 	if (this.data !== null) {
-		renderer.addToRenderList(this.data, this.getMatrix()); // TODO matrix
+		renderer.addToRenderList(this.data, this.matrix);
 	}
 	
 	for (var i in this.children) {
@@ -2468,6 +3131,10 @@ VVGL.SceneNode.prototype.render = function (renderer) {
  * @param {number} elapsedTime Elapsed miliseconds from last frame.
  */
 VVGL.SceneNode.prototype.update = function (elapsedTime) {
+	if (!this.upToDate) {
+		this.updateMatrix();
+	}
+	
 	if (this.data !== null) {
 		this.data.update(elapsedTime);
 	}
@@ -2646,13 +3313,7 @@ VVGL.ShaderProgram = function (vertexShader, fragmentShader) {
 	this.addAttribute("aPosition");
 	this.addAttribute("aColor");
 	this.addAttribute("aTextureCoord");
-
-	this.addUniform("uModelMatrix");
-	this.addUniform("uPerspectiveMatrix");
-	this.addUniform("uViewMatrix");
-	this.addUniform("uUseColor");
-	this.addUniform("uUseTexture");
-	this.addUniform("uTexture");
+	this.addAttribute("aNormal");
 };
 
 /**
@@ -2749,8 +3410,8 @@ VVGL.ShaderProgram.prototype.unsetAttribute = function (name) {
 VVGL.ShaderProgram.prototype.getUniform = function (name) {
 	var uniform = this.uniforms[name];
 	
-	if (uniform === undefined) {
-		throw new VVGL.Exception("Trying to get undefined uniform: " + name);
+	if (!uniform) {
+		this.addUniform(name);
 	}
 	
 	return (uniform);
@@ -2770,6 +3431,58 @@ VVGL.ShaderProgram.prototype.setIntUniform = function (name, value) {
  * @see {@link VVGL.ShaderProgram.prototype.setIntUniform}
  */
 VVGL.ShaderProgram.prototype.setBoolUniform = VVGL.ShaderProgram.prototype.setIntUniform;
+
+/**
+ * Set Float uniform.
+ * 
+ * @param {string} name Uniform variable name.
+ * @param {number} value Uniform variable value.
+ */
+VVGL.ShaderProgram.prototype.setFloatUniform = function (name, value) {
+	gl.uniform1f(this.getUniform(name), value);
+};
+
+/**
+ * Set Vec3 uniform.
+ * 
+ * @param {string} name Uniform variable name.
+ * @param {VVGL.Vec3} vector Uniform variable value.
+ */
+VVGL.ShaderProgram.prototype.setVector3Uniform = function (name, vector) {
+	gl.uniform3f(this.getUniform(name), vector.x, vector.y, vector.z);
+};
+
+/**
+ * Set Vec4 uniform.
+ * 
+ * @param {string} name Uniform variable name.
+ * @param {VVGL.Vec4} vector Uniform variable value.
+ */
+VVGL.ShaderProgram.prototype.setVector4Uniform = function (name, vector) {
+	gl.uniform4f(this.getUniform(name), vector.x, vector.y, vector.z, vector.w);
+};
+
+
+/**
+ * Set color uniform.
+ * 
+ * @param {string} name Uniform variable name.
+ * @param {VVGL.Color} color Uniform variable value.
+ */
+VVGL.ShaderProgram.prototype.setColorUniform = function (name, color) {
+	gl.uniform3f(this.getUniform(name), color.r, color.g, color.b);
+};
+
+/**
+ * Set Mat3 uniform.
+ * 
+ * @param {string} name Uniform variable name.
+ * @param {VVGL.Mat3} matrix Uniform variable value.
+ */
+VVGL.ShaderProgram.prototype.setMatrix3Uniform = function (name, matrix) {
+	var uniform = this.getUniform(name);
+	gl.uniformMatrix3fv(uniform, false, matrix.toArray());
+};
 
 /**
  * Set Mat4 uniform.
@@ -2882,6 +3595,7 @@ VVGL.Texture.prototype.activate = function () {
     this.bind();
     shader.setIntUniform("uTexture", 0);
 };
+
 
 /**
  * Called if image loading failed.

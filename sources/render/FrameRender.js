@@ -12,7 +12,46 @@ VVGL.FrameRender = function () {
  */
 VVGL.FrameRender.prototype.reset = function () {
 	this.datas["camera"]	= [];
+	this.datas["light"]		= [];
 	this.datas["mesh"]		= [];
+};
+
+/**
+ * Add lights datas to shader program.
+ * 
+ * @private
+ * @param {VVGL.ShaderProgram} shader
+ */
+VVGL.FrameRender.prototype.addLights = function (shader) {
+	for (var i in this.datas["light"]) {
+		var light = this.datas["light"][i];
+		
+		light.sendToShader(shader);
+	}
+};
+
+/**
+ * Get mesh list linked to shader.
+ * Create list and add it to meshes list if it doesn't exist.
+ * 
+ * @private
+ * @param {VVGL.ShaderProgram} shader
+ * @return {Object} Meshes list.
+ */
+VVGL.FrameRender.prototype.findShaderMeshList = function (shader) {
+	for (var i in this.datas["mesh"]) {
+		var meshes = this.datas["mesh"][i];
+		if (meshes.shader === shader) {
+			return (meshes);
+		}
+	}
+	
+	var meshes = {
+		shader: shader,
+		list: []
+	};
+	this.datas["mesh"].push(meshes);
+	return (meshes);
 };
 
 /**
@@ -22,10 +61,16 @@ VVGL.FrameRender.prototype.reset = function () {
  * @param {VVGL.Mat4} matrix Model matrix
  */
 VVGL.FrameRender.prototype.addData = function (data, matrix) {
-	this.datas[data.getType()].push({
-		data: data,
-		matrix: matrix
-	});
+	if (data.getType() == "mesh") {
+		var datas = this.findShaderMeshList(data.getShader());
+		
+		datas.list.push({
+			matrix: matrix,
+			data: data
+		});
+	} else {
+		this.datas[data.getType()].push(data);
+	}
 };
 
 /**
@@ -33,18 +78,14 @@ VVGL.FrameRender.prototype.addData = function (data, matrix) {
  * 
  * @private
  * @param {VVGL.Camera} camera
- * @todo alter camera view position from its model matrix.
+ * @return {VVGL.Mat4} View matrix
  */
 VVGL.FrameRender.prototype.configureFromCamera = function (activeCamera) {
-	for (var i in this.datas["camera"]) {
-		var camera = this.datas["camera"][i];
-		
-		if (camera.data === activeCamera) {
-			var program = VVGL.ShaderProgram.currentProgram;
-			program.setMatrix4Uniform("uPerspectiveMatrix", activeCamera.getPerspective());
-			program.setMatrix4Uniform("uViewMatrix", activeCamera.getView());
-		};
-	}
+	var program = VVGL.ShaderProgram.currentProgram;
+	program.setMatrix4Uniform("uPerspectiveMatrix", activeCamera.getPerspective());
+	program.setMatrix4Uniform("uViewMatrix", activeCamera.getView());
+	
+	return (activeCamera.getView());
 };
 
 /**
@@ -53,13 +94,27 @@ VVGL.FrameRender.prototype.configureFromCamera = function (activeCamera) {
  * @param {VVGL.Camera} camera Active camera
  */
 VVGL.FrameRender.prototype.render = function (camera) {
-	this.configureFromCamera(camera);
+	var viewMatrix = this.configureFromCamera(camera);
+	var modelViewMatrix = new VVGL.Mat4();
+	var normalMatrix = new VVGL.Mat3();
 	
 	for (var i in this.datas["mesh"]) {
-		var program = VVGL.ShaderProgram.currentProgram; // TODO one program by mesh possible.
-		var mesh = this.datas["mesh"][i];
-		program.setMatrix4Uniform("uModelMatrix", mesh.matrix);
+		var meshes = this.datas["mesh"][i];
+		var program = meshes.shader;
+		var list = meshes.list;
+		program.bind();
 		
-		mesh.data.render();
+		this.addLights(program);
+		
+		for (var i in list) {
+			var mesh = list[i];
+			
+			normalMatrix.normalFromMat4(mesh.matrix);
+			normalMatrix.transpose();
+			
+			program.setMatrix4Uniform("uModelMatrix", mesh.matrix);
+			program.setMatrix3Uniform("uNormalMatrix", normalMatrix);
+			mesh.data.render();
+		}
 	}
 };

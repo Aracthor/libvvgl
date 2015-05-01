@@ -46,6 +46,7 @@ VVGL.Texture.prototype.activate = function () {
     shader.setIntUniform("uTexture", 0);
 };
 
+
 /**
  * Called if image loading failed.
  * 

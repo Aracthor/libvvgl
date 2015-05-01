@@ -152,6 +152,45 @@ VVGL.Mat4.prototype.scale = function (vector) {
 };
 
 /**
+ * Multiply matrix by another.
+ * 
+ * @param {VVGL.Mat4} matrix
+ */
+VVGL.Mat4.prototype.multiply = function (matrix) {
+    var data = this.data,
+    	b = matrix.data,
+    	a00 =  data[0], a01 =  data[1], a02 =  data[2], a03 =  data[3],
+        a10 =  data[4], a11 =  data[5], a12 =  data[6], a13 =  data[7],
+        a20 =  data[8], a21 =  data[9], a22 =  data[10], a23 =  data[11],
+        a30 =  data[12], a31 =  data[13], a32 =  data[14], a33 =  data[15];
+
+    // Cache only the current line of the second matrix
+    var b0  =  b[0], b1 =  b[1], b2 =  b[2], b3 =  b[3];  
+     data[0] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+     data[1] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+     data[2] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+     data[3] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+
+    b0 =  b[4]; b1 =  b[5]; b2 =  b[6]; b3 =  b[7];
+     data[4] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+     data[5] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+     data[6] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+     data[7] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+
+    b0 =  b[8]; b1 =  b[9]; b2 =  b[10]; b3 =  b[11];
+     data[8] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+     data[9] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+     data[10] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+     data[11] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+
+    b0 =  b[12]; b1 =  b[13]; b2 =  b[14]; b3 =  b[15];
+     data[12] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+     data[13] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+     data[14] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+     data[15] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+};
+
+/**
  * Create a perspective projection matrix.
  * 
  * @param {number} angle Vertical field of view in radians.
@@ -270,6 +309,17 @@ VVGL.Mat4.prototype.lookAt = function (position, target, up) {
 };
 
 /**
+ * Copy matrix data to another preallocated matrix object.
+ * 
+ * @param {VVGL.Mat4} destination
+ */
+VVGL.Mat4.prototype.copyTo = function (destination) {
+	for (var i = 0; i < 16; ++i) {
+		destination.data[i] = this.data[i];
+	}
+};
+
+/**
  * Return a copy of this matrix.
  * 
  * @return {VVGL.Mat4} Copy.
@@ -277,7 +327,7 @@ VVGL.Mat4.prototype.lookAt = function (position, target, up) {
 VVGL.Mat4.prototype.clone = function () {
 	var clone = new VVGL.Mat4();
 	
-	clone.data = this.data.slice();
+	this.copyTo(clone);
 	
 	return (clone);
 };

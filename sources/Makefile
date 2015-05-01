@@ -5,7 +5,7 @@
 ## Login   <aracthor@epitech.net>
 ## 
 ## Started on  Sat Apr 11 09:31:12 2015 aracthor
-## Last Update Sun Apr 26 16:08:49 2015 aracthor
+## Last Update Fri May  1 19:28:18 2015 aracthor
 ##
 
 CC=		cat
@@ -59,10 +59,19 @@ INTERFACES_FILES=	IBindable.js	\
 			SceneData.js
 INTERFACES_SRCS=	$(INTERFACES_FILES:%.js=$(INTERFACES_DIR)%.js)
 
+LIGHT_DIR=	light/
+LIGHT_FILES=	Light.js		\
+		AmbianceLight.js	\
+		DirectionLight.js	\
+		SpotLight.js
+LIGHT_SRCS=	$(LIGHT_FILES:%.js=$(LIGHT_DIR)%.js)
+
 MATHS_DIR=	maths/
-MATHS_FILES=	Mat4.js		\
+MATHS_FILES=	Mat3.js		\
+		Mat4.js		\
 		Maths.js	\
-		Vec3.js
+		Vec3.js		\
+		Vec4.js
 MATHS_SRCS=	$(MATHS_FILES:%.js=$(MATHS_DIR)%.js)
 
 MESH_DIR=	mesh/
@@ -112,6 +121,7 @@ SRCS=	namespace.js		\
 	$(CAMERA_SRCS)		\
 	$(DATA_SRCS)		\
 	$(EXCEPTIONS_SRCS)	\
+	$(LIGHT_SRCS)		\
 	$(MATHS_SRCS)		\
 	$(MESH_SRCS)		\
 	$(RENDER_SRCS)		\

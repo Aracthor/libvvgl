@@ -112,7 +112,7 @@ VVGL.Application.prototype.lockPointer = function () {
 /**
  * Disable mouse lock.
  * 
- * @todo todo.
+ * @todo unlock pointer for real.
  */
 VVGL.Application.prototype.unlockPointer = function () {
 	this.eventsManager.wantMouseLocked = false;
