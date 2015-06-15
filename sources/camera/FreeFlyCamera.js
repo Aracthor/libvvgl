@@ -28,7 +28,7 @@ VVGL.FreeFlyCamera = function () {
 VVGL.FreeFlyCamera.prototype = Object.create(VVGL.Camera.prototype);
 
 /**
- * Coeficient between 1 and 0 proportional to movement inertia.
+ * Coefficient between 1 and 0 proportional to movement inertia.
  * 
  * @type {number}
  * @default
@@ -82,13 +82,11 @@ VVGL.FreeFlyCamera.prototype.recalcVectors = function () {
  */
 VVGL.FreeFlyCamera.prototype.update = function (elapsedTime) {
 	var movementScale = this.speed * elapsedTime;
-	
-	this.move.scale(movementScale);
-	{
-		this.position.add(this.move);
-	}
-	this.move.scale(1.0 / movementScale);
-	
+
+    this.position.x += this.move.x * movementScale;
+    this.position.y += this.move.y * movementScale;
+    this.position.z += this.move.z * movementScale;
+
 	this.move.scale(this.inertiaCoef);
 	
 	this.recalcVectors();

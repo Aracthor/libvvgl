@@ -168,6 +168,7 @@ VVGL.EventsManager = function (canvas) {
 	canvas.addEventListener("mousemove", function (event) {me.onMouseMove(event);}, false);
 	canvas.addEventListener("mousedown", function (event) {me.onMouseDown(event);}, false);
 	canvas.addEventListener("mouseup", function (event) {me.onMouseUp(event);}, false);
+    canvas.addEventListener("wheel", function (event) {me.onWheel(event);}, false);
 	
 	// Lock events
 	document.addEventListener('pointerlockerror', me.onLockError, false);
@@ -245,6 +246,10 @@ VVGL.EventsManager.prototype.onMouseDown = function (event) {
 		this.mouseLocked = true;
 		VVGL.Mouse.isLocked = true;
 	}
+
+    for (var i in this.eventsHandlers) {
+        this.eventsHandlers[i].onButtonPress(event.button, event.clientX, event.clientY);
+    }
 };
 
 /**
@@ -255,6 +260,23 @@ VVGL.EventsManager.prototype.onMouseDown = function (event) {
  */
 VVGL.EventsManager.prototype.onMouseUp = function (event) {
 	VVGL.Mouse.releaseButton(event.button);
+
+    for (var i in this.eventsHandlers) {
+        this.eventsHandlers[i].onButtonRelease(event.button, event.clientX, event.clientY);
+    }
+};
+
+/**
+ * Called on mouse wheel.
+ *
+ * @private
+ * @param {Object} event Wheel movement details.
+ * @todo handle firefox different values for delta.
+ */
+VVGL.EventsManager.prototype.onWheel = function (event) {
+    for (var i in this.eventsHandlers) {
+        this.eventsHandlers[i].onWheelMovement(event.clientX, event.clientY, event.deltaX, event.deltaY, event.deltaZ);
+    }
 };
 
 /**
@@ -283,11 +305,15 @@ VVGL.EventsManager.prototype.callKeyListeners = function () {
  * @classdesc May react to input events like keyboard, mouse etc.
  */
 VVGL.EventsHandler = function (manager) {
-	this.keyListeners = [];
-	this.keyPressListeners = [];
-	this.keyReleaseListeners = [];
-	this.mouseMovementListener = null;
-	
+    this.keyListeners = [];
+    this.keyPressListeners = [];
+    this.keyReleaseListeners = [];
+    this.buttonListeners = [];
+    this.buttonPressListeners = [];
+    this.buttonReleaseListeners = [];
+    this.mouseMovementListener = null;
+    this.wheelMovementListener = null;
+
 	if (!manager) {
 		var manager = VVGL.Application.instance.eventsManager;
 	}
@@ -306,7 +332,7 @@ VVGL.EventsHandler.prototype.addKeyListener = function (key, listener) {
 };
 
 /**
- * Add event listener to each time key start to be pressed.
+ * Add event listener to each time key start is pressed.
  * 
  * @param {VVGL.KeyCode} key
  * @param {VVGL.KeyEventListener} listener
@@ -326,6 +352,39 @@ VVGL.EventsHandler.prototype.addKeyReleaseListener = function (key, listener) {
 };
 
 /**
+ * Add event listener to each frame during button is pressed.
+ *
+ * @param {VVGL.MouseButton} button
+ * @param {VVGL.MouseButtonEventListener} listener
+
+ */
+VVGL.EventsHandler.prototype.addMouseButtonListener = function (button, listener) {
+    this.buttonListeners[button] = listener;
+};
+
+/**
+ * Add event listener to each time button is pressed.
+ *
+ * @param {VVGL.MouseButton} button
+ * @param {VVGL.MouseButtonEventListener} listener
+
+ */
+VVGL.EventsHandler.prototype.addMouseButtonPressListener = function (button, listener) {
+    this.buttonPressListeners[button] = listener;
+};
+
+/**
+ * Add event listener to each time button is released.
+ *
+ * @param {VVGL.MouseButton} button
+ * @param {VVGL.MouseButtonEventListener} listener
+
+ */
+VVGL.EventsHandler.prototype.addMouseButtonReleaseListener = function (button, listener) {
+    this.buttonReleaseListeners[button] = listener;
+};
+
+/**
  * Add mouse movement listener.
  * 
  * @param {VVGL.MouseMovementListener} listener
@@ -334,20 +393,46 @@ VVGL.EventsHandler.prototype.addMouseMovementListener = function (listener) {
 	this.mouseMovementListener = listener;	
 };
 
+/**
+ * Add wheel movement listener.
+ *
+ * @param {VVGL.WheelMovementListener} listener
+ */
+VVGL.EventsHandler.prototype.addWheelMovementListener = function (listener) {
+    this.wheelMovementListener = listener;
+};
+
 
 /**
  * Used to search a specific key listener, and execute it if exists.
- * 
+ *
  * @private
  * @param {Array} listeners
  * @param {VVGL.KeyCode} keyCode
  */
 VVGL.EventsHandler.prototype.onKeyEvent = function (listeners, keyCode) {
-	var listener = listeners[keyCode];
-	
-	if (listener) {
-		listener.onEvent(this);
-	};
+    var listener = listeners[keyCode];
+
+    if (listener) {
+        listener.onEvent(this);
+    };
+};
+
+/**
+ * Used to search a specific button listener, and execute it if exists.
+ *
+ * @private
+ * @param {Array} listeners
+ * @param {VVGL.MouseButton} button
+ * @param {number} x X mouse position
+ * @param {number} y Y mouse position
+ */
+VVGL.EventsHandler.prototype.onButtonEvent = function (listeners, button, x, y) {
+    var listener = listeners[button];
+
+    if (listener) {
+        listener.onEvent(this, x, y);
+    };
 };
 
 /**
@@ -360,7 +445,7 @@ VVGL.EventsHandler.prototype.onKey = function (keyCode) {
 };
 
 /**
- * Called by {VVGL.EventsManager} on key pression.
+ * Called by {VVGL.EventsManager} on key pressure.
  *
  * @param {VVGL.KeyCode} keyCode
  */
@@ -378,6 +463,39 @@ VVGL.EventsHandler.prototype.onKeyRelease = function (keyCode) {
 };
 
 /**
+ * Called by {VVGL.EventsManager} on frame where button is pressed.
+ *
+ * @param {VVGL.MouseButton} button
+ * @param {number} x
+ * @param {number} y
+ */
+VVGL.EventsHandler.prototype.onButton = function (button, x, y) {
+    this.onButtonEvent(this.buttonListeners, button, x, y);
+};
+
+/**
+ * Called by {VVGL.EventsManager} on mouse button pressure.
+ *
+ * @param {VVGL.MouseButton} button
+ * @param {number} x
+ * @param {number} y
+ */
+VVGL.EventsHandler.prototype.onButtonPress = function (button, x, y) {
+    this.onButtonEvent(this.buttonPressListeners, button, x, y);
+};
+
+/**
+ * Called by {VVGL.EventsManager} on mouse button release.
+ *
+ * @param {VVGL.MouseButton} button
+ * @param {number} x
+ * @param {number} y
+ */
+VVGL.EventsHandler.prototype.onButtonRelease = function (button, x, y) {
+    this.onButtonEvent(this.buttonReleaseListeners, button, x, y);
+};
+
+/**
  * Called by {VVGL.EventsManager} on mouse movement.
  * Call its own mouseMovementListener.
  * 
@@ -388,6 +506,22 @@ VVGL.EventsHandler.prototype.onMouseMovement = function (x, y) {
 	if (this.mouseMovementListener !== null) {
 		this.mouseMovementListener.onEvent(this, x, y);
 	}
+};
+
+/**
+ * Called by {VVGL.EventsManager} on mouse movement.
+ * Call its own wheelMovementListener.
+ *
+ * @param {number} x
+ * @param {number} y
+ * @param {number} deltaX
+ * @param {number} deltaY
+ * @param {number} deltaZ
+ */
+VVGL.EventsHandler.prototype.onWheelMovement = function (x, y, deltaX, deltaY, deltaZ) {
+    if (this.wheelMovementListener !== null) {
+        this.wheelMovementListener.onEvent(this, x, y, deltaX, deltaY, deltaZ);
+    }
 };
 /**
  * Static object regrouping keyboard functions.
@@ -502,6 +636,24 @@ VVGL.Mouse.releaseButton = function (button) {
 };
 /**
  * @class
+ * @classdesc Handle a mouse button event.
+ * @see {@link VVGL.EventsHandler}
+ * @param {function} onEvent Function to call on event.
+ */
+VVGL.MouseButtonEventListener = function (onEvent) {
+    this.onEvent = onEvent;
+};
+
+/**
+ * Called on matching mouse button event.
+ *
+ * @param {VVGL.EventsHandler} data Object that was listening.
+ */
+VVGL.MouseButtonEventListener.prototype.onEvent = function (data, x, y) {
+    this.onEvent(data, x, y);
+};
+/**
+ * @class
  * @classdesc Handle a mouse movement.
  * @param {function} onEvent Function to call on event.
  */
@@ -516,8 +668,31 @@ VVGL.MouseMovementListener = function (onEvent) {
  * @param {number} x X movement.
  * @param {number} y Y movement.
  */
-VVGL.KeyEventListener.prototype.onEvent = function (data, x, y) {
+VVGL.MouseMovementListener.prototype.onEvent = function (data, x, y) {
 	throw new VVGL.ImplementationException(this, "onEvent", "MouseMovementListener");
+};
+/**
+ * @class
+ * @classdesc Handle a wheel movement.
+ * @param {function} onEvent Function to call on event.
+ */
+VVGL.WheelMovementListener = function (onEvent) {
+    this.onEvent = onEvent;
+};
+
+/**
+ * Called on wheel movement.
+ *
+ * @param {VVGL.EventsHandler} data Object that was listening.
+ * @param {number} x X movement.
+ * @param {number} y Y movement.
+ * @param {number} deltaX horizontal scrolling.
+ * @param {number} deltaY vertical scrolling.
+ * @param {number} deltaZ I have no idea.
+ * @todo Understand what a hell could be deltaZ
+ */
+VVGL.WheelMovementListener.prototype.onEvent = function (data, x, y, deltaX, deltaY, deltaZ) {
+    throw new VVGL.ImplementationException(this, "onEvent", "WheelMovementListener");
 };
 /**
  * Super singleton manager of canvas, graphic and physic engine.
@@ -842,7 +1017,7 @@ VVGL.FreeFlyCamera = function () {
 VVGL.FreeFlyCamera.prototype = Object.create(VVGL.Camera.prototype);
 
 /**
- * Coeficient between 1 and 0 proportional to movement inertia.
+ * Coefficient between 1 and 0 proportional to movement inertia.
  * 
  * @type {number}
  * @default
@@ -896,13 +1071,11 @@ VVGL.FreeFlyCamera.prototype.recalcVectors = function () {
  */
 VVGL.FreeFlyCamera.prototype.update = function (elapsedTime) {
 	var movementScale = this.speed * elapsedTime;
-	
-	this.move.scale(movementScale);
-	{
-		this.position.add(this.move);
-	}
-	this.move.scale(1.0 / movementScale);
-	
+
+    this.position.x += this.move.x * movementScale;
+    this.position.y += this.move.y * movementScale;
+    this.position.z += this.move.z * movementScale;
+
 	this.move.scale(this.inertiaCoef);
 	
 	this.recalcVectors();
@@ -984,11 +1157,160 @@ VVGL.FreeFlyCamera.turnCamera = function (camera, x, y) {
  */
 VVGL.TrackballCamera = function () {
 	VVGL.Camera.call(this);
-	
-	this.position.x = -10;
+
+    this.move = new VVGL.Vec2();
+
+    this.addMouseButtonPressListener(VVGL.MouseButton.LEFT, new VVGL.MouseButtonEventListener(VVGL.TrackballCamera.stop));
+    this.addMouseMovementListener(new VVGL.MouseMovementListener(VVGL.TrackballCamera.turn));
+    this.addWheelMovementListener(new VVGL.WheelMovementListener(VVGL.TrackballCamera.zoom));
+
+    this.recalcVectors();
 };
 
 VVGL.TrackballCamera.prototype = Object.create(VVGL.Camera.prototype);
+
+/**
+ * Distance between center and position.
+ * Or radius of camera's sphere.
+ *
+ * @type {number}
+ * @default
+ */
+VVGL.TrackballCamera.prototype.distance = 10;
+
+/**
+ * Horizontal and vertical rotation speeds.
+ *
+ * @type {number}
+ * @default
+ */
+VVGL.TrackballCamera.prototype.rotationSpeed = 0.0001;
+
+/**
+ * Zoom speed.
+ *
+ * @type {number}
+ * @default
+ */
+VVGL.TrackballCamera.prototype.zoomSpeed = 0.1;
+
+/**
+ * Coefficient between 1 and 0 proportional to movement inertia.
+ *
+ * @type {number}
+ * @default
+ */
+VVGL.TrackballCamera.prototype.inertiaCoef = 0.95;
+
+/**
+ * Horizontal angle.
+ * Defined in radians.
+ *
+ * @type {number}
+ * @default
+ */
+VVGL.TrackballCamera.prototype.angleX = 0;
+
+/**
+ * Vertical angle.
+ * Defined in radians.
+ *
+ * @type {number}
+ * @default
+ */
+VVGL.TrackballCamera.prototype.angleY = 0;
+
+/**
+ * Recalc camera position from target and angles.
+ *
+ * @private
+ * @todo Use math helper to trigonometry.
+ */
+VVGL.TrackballCamera.prototype.recalcVectors = function () {
+    this.position.x = Math.cos(this.angleY) * Math.cos(this.angleX);
+    this.position.y = Math.cos(this.angleY) * Math.sin(this.angleX);
+    this.position.z = Math.sin(this.angleY);
+    this.position.scale(this.distance);
+    this.position.add(this.target);
+
+    this.move.scale(this.inertiaCoef);
+};
+
+/**
+ * Update camera data.
+ * Move position if camera was turning,
+ * update movement with inertia,
+ * and recalc other vectors.
+ *
+ * @override
+ * @param {number} elapsedTime
+ */
+VVGL.TrackballCamera.prototype.update = function (elapsedTime) {
+    var yMax = VVGL.Maths.PI / 2 - 0.01;
+    this.angleX += this.move.x * elapsedTime;
+    this.angleY += this.move.y * elapsedTime;
+
+    if (this.angleY > yMax) {
+        this.angleY = yMax;
+    } else if (this.angleY < -yMax) {
+        this.angleY = -yMax;
+    }
+
+    this.recalcVectors();
+};
+
+/**
+ * Turn camera mouse movement listener.
+ *
+ * @private
+ * @static
+ * @param {VVGL.TrackballCamera} camera
+ * @param {number} x
+ * @param {number} y
+ */
+VVGL.TrackballCamera.turn = function (camera, x, y) {
+    if (VVGL.Mouse.isLocked || VVGL.Mouse.buttonIsPressed(VVGL.MouseButton.LEFT)) {
+        camera.move.x += x * camera.rotationSpeed;
+        camera.move.y -= y * camera.rotationSpeed;
+    }
+};
+
+/**
+ * Stop camera mouse pressure listener.
+ *
+ * @private
+ * @static
+ * @param {VVGL.TrackballCamera} camera
+ * @param {number} x X mouse position
+ * @param {number} y Y mouse position
+ */
+VVGL.TrackballCamera.stop = function (camera, x, y) {
+    camera.move.x = 0;
+    camera.move.y = 0;
+};
+
+/**
+ * Zoom camera wheel movement listener.
+ *
+ * @private
+ * @static
+ * @param {VVGL.TrackballCamera} camera
+ * @param {number} x X mouse position
+ * @param {number} y Y mouse position
+ * @param {number} deltaX Horizontal scroll
+ * @param {number} deltaY Vertical scroll
+ * @param {number} deltaZ No idea
+ */
+VVGL.TrackballCamera.zoom = function (camera, x, y, deltaX, deltaY, deltaZ) {
+    while (deltaY > 0) {
+        camera.distance += camera.distance * camera.zoomSpeed;
+        --deltaY;
+    }
+    while (deltaY < 0) {
+        camera.distance -= camera.distance * camera.zoomSpeed;
+        ++deltaY;
+    }
+};
 /**
  * Functions for color-integer manipulation.
  * 
@@ -2047,13 +2369,119 @@ VVGL.Maths = {};
 
 VVGL.Maths.PI = 3.14159265359;
 /**
+ * A 4-dimensional vector.
+ *
+ * @class A 4-dimensional vector.
+ * @constructor
+ * @param {number} [0] x X-axis value.
+ * @param {number} [0] y Y-axis value.
+ */
+VVGL.Vec2 = function (x, y) {
+    if (x !== undefined) {
+        this.x = x;
+        this.y = y;
+    }
+
+};
+
+/**
+ * X-axis value.
+ *
+ * @type {number}
+ */
+VVGL.Vec2.prototype.x = 0.0;
+
+/**
+ * Y-axis value.
+ *
+ * @type {number}
+ */
+VVGL.Vec2.prototype.y = 0.0;
+
+
+/**
+ * Add another vector to this one.
+ *
+ * @param {VVGL.Vec2} vector
+ */
+VVGL.Vec2.prototype.add = function (vector) {
+    this.x += vector.x;
+    this.y += vector.y;
+};
+
+/**
+ * Substract another vector to this one.
+ *
+ * @param {VVGL.Vec2} vector
+ */
+VVGL.Vec2.prototype.sub = function (vector) {
+    this.x -= vector.x;
+    this.y -= vector.y;
+};
+
+/**
+ * Scale vector by a number.
+ *
+ * @param {number} n
+ */
+VVGL.Vec2.prototype.scale = function (n) {
+    this.x *= n;
+    this.y *= n;
+};
+
+/**
+ * Copy vector data to another.
+ *
+ * @param {VVGL.Vec2} vector
+ */
+VVGL.Vec2.prototype.copyTo = function (vector) {
+    vector.x = this.x;
+    vector.y = this.y;
+};
+
+/**
+ * Calc and return vector's norm.
+ *
+ * @return {number} Vector's norm.
+ */
+VVGL.Vec2.prototype.getNorm = function () {
+    return (Math.sqrt(this.x * this.x + this.y * this.y));
+};
+
+/**
+ * Normalize vector, making its norm to 1.
+ */
+VVGL.Vec2.prototype.normalize = function () {
+    var norm = this.getNorm();
+    this.scale(1 / norm);
+};
+
+/**
+ * Create copy of this vector.
+ *
+ * @return {VVGL.Vec2} Copy.
+ */
+VVGL.Vec2.prototype.clone = function () {
+    return (new VVGL.Vec2(this.x, this.y));
+};
+
+/**
+ * Convert vector to a data array.
+ *
+ * @return {Array} A float array containing the three vector's values.
+ */
+VVGL.Vec2.prototype.toArray = function () {
+    return ([this.x, this.y]);
+};
+
+/**
  * A 3-dimensional vector.
  * 
  * @class A 3-dimensional vector.
  * @constructor
- * @param {number} x X-axis value.
- * @param {number} y Y-axis value.
- * @param {number} z Z-axis value.
+ * @param {number} [0] x X-axis value.
+ * @param {number} [0] y Y-axis value.
+ * @param {number} [0] z Z-axis value.
  */
 VVGL.Vec3 = function (x, y, z) {
 	if (x !== undefined) {
@@ -2200,10 +2628,10 @@ VVGL.Vec3.crossProduct = function (u, v) {
  * 
  * @class A 4-dimensional vector.
  * @constructor
- * @param {number} x X-axis value.
- * @param {number} y Y-axis value.
- * @param {number} z Z-axis value.
- * @param {number} w W-axis value.
+ * @param {number} [0] x X-axis value.
+ * @param {number} [0] y Y-axis value.
+ * @param {number} [0] z Z-axis value.
+ * @param {number} [0] w W-axis value.
  */
 VVGL.Vec4 = function (x, y, z, w) {
 	if (x !== undefined) {

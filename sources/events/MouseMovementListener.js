@@ -14,6 +14,6 @@ VVGL.MouseMovementListener = function (onEvent) {
  * @param {number} x X movement.
  * @param {number} y Y movement.
  */
-VVGL.KeyEventListener.prototype.onEvent = function (data, x, y) {
+VVGL.MouseMovementListener.prototype.onEvent = function (data, x, y) {
 	throw new VVGL.ImplementationException(this, "onEvent", "MouseMovementListener");
 };

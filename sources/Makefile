@@ -5,7 +5,7 @@
 ## Login   <aracthor@epitech.net>
 ## 
 ## Started on  Sat Apr 11 09:31:12 2015 aracthor
-## Last Update Sat May  2 12:56:57 2015 aracthor
+## Last Update Mon Jun 15 21:39:04 2015 Aracthor
 ##
 
 CC=		cat
@@ -33,12 +33,14 @@ DATA_FILES=	Color.js	\
 DATA_SRCS=	$(DATA_FILES:%.js=$(DATA_DIR)%.js)
 
 EVENTS_DIR=	events/
-EVENTS_FILES=	EventsManager.js	\
-		EventsHandler.js	\
-		Keyboard.js		\
-		KeyEventListener.js	\
-		Mouse.js		\
-		MouseMovementListener.js
+EVENTS_FILES=	EventsManager.js		\
+		EventsHandler.js		\
+		Keyboard.js			\
+		KeyEventListener.js		\
+		Mouse.js			\
+		MouseButtonEventListener.js	\
+		MouseMovementListener.js	\
+		WheelMovementListener.js
 EVENTS_SRCS=	$(EVENTS_FILES:%.js=$(EVENTS_DIR)%.js)
 
 EXCEPTIONS_DIR=		exceptions/
@@ -70,6 +72,7 @@ MATHS_DIR=	maths/
 MATHS_FILES=	Mat3.js		\
 		Mat4.js		\
 		Maths.js	\
+		Vec2.js		\
 		Vec3.js		\
 		Vec4.js
 MATHS_SRCS=	$(MATHS_FILES:%.js=$(MATHS_DIR)%.js)

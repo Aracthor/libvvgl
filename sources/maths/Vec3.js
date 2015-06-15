@@ -3,9 +3,9 @@
  * 
  * @class A 3-dimensional vector.
  * @constructor
- * @param {number} x X-axis value.
- * @param {number} y Y-axis value.
- * @param {number} z Z-axis value.
+ * @param {number} [0] x X-axis value.
+ * @param {number} [0] y Y-axis value.
+ * @param {number} [0] z Z-axis value.
  */
 VVGL.Vec3 = function (x, y, z) {
 	if (x !== undefined) {

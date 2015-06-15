@@ -3,10 +3,10 @@
  * 
  * @class A 4-dimensional vector.
  * @constructor
- * @param {number} x X-axis value.
- * @param {number} y Y-axis value.
- * @param {number} z Z-axis value.
- * @param {number} w W-axis value.
+ * @param {number} [0] x X-axis value.
+ * @param {number} [0] y Y-axis value.
+ * @param {number} [0] z Z-axis value.
+ * @param {number} [0] w W-axis value.
  */
 VVGL.Vec4 = function (x, y, z, w) {
 	if (x !== undefined) {
