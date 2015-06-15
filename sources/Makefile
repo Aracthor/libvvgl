@@ -5,7 +5,7 @@
 ## Login   <aracthor@epitech.net>
 ## 
 ## Started on  Sat Apr 11 09:31:12 2015 aracthor
-## Last Update Fri May  1 19:28:18 2015 aracthor
+## Last Update Sat May  2 12:56:57 2015 aracthor
 ##
 
 CC=		cat
@@ -76,7 +76,8 @@ MATHS_SRCS=	$(MATHS_FILES:%.js=$(MATHS_DIR)%.js)
 
 MESH_DIR=	mesh/
 MESH_FILES=	ArrayBuffer.js	\
-		Mesh.js
+		Mesh.js		\
+		Axis.js
 MESH_SRCS=	$(MESH_FILES:%.js=$(MESH_DIR)%.js)
 
 RENDER_DIR=	render/

@@ -7,16 +7,16 @@
  */
 VVGL.FreeFlyCamera = function () {
 	VVGL.Camera.call(this);
-	
+
 	this.forward = new VVGL.Vec3();
 	this.left = new VVGL.Vec3();
 	this.move = new VVGL.Vec3();
-	
+
 	this.angleX = 0;
 	this.angleY = 0;
 	
 	this.recalcVectors();
-	
+
 	this.addKeyListener(VVGL.KeyCode.W, new VVGL.KeyEventListener(VVGL.FreeFlyCamera.advanceFront));
 	this.addKeyListener(VVGL.KeyCode.S, new VVGL.KeyEventListener(VVGL.FreeFlyCamera.advanceBack));
 	this.addKeyListener(VVGL.KeyCode.D, new VVGL.KeyEventListener(VVGL.FreeFlyCamera.advanceRight));

@@ -821,16 +821,16 @@ VVGL.Camera.prototype.getView = function () {
  */
 VVGL.FreeFlyCamera = function () {
 	VVGL.Camera.call(this);
-	
+
 	this.forward = new VVGL.Vec3();
 	this.left = new VVGL.Vec3();
 	this.move = new VVGL.Vec3();
-	
+
 	this.angleX = 0;
 	this.angleY = 0;
 	
 	this.recalcVectors();
-	
+
 	this.addKeyListener(VVGL.KeyCode.W, new VVGL.KeyEventListener(VVGL.FreeFlyCamera.advanceFront));
 	this.addKeyListener(VVGL.KeyCode.S, new VVGL.KeyEventListener(VVGL.FreeFlyCamera.advanceBack));
 	this.addKeyListener(VVGL.KeyCode.D, new VVGL.KeyEventListener(VVGL.FreeFlyCamera.advanceRight));
@@ -2604,6 +2604,34 @@ VVGL.Mesh.prototype.render = function () {
  * @param {number} elapsedTime
  */
 VVGL.Mesh.prototype.update = function (elapsedTime) {};
+/**
+ * @class
+ * @extends VVGL.Mesh
+ * @classdesc Mesh representing axis in 3 Dimentions.
+ * @param {number} length Lines length.
+ */
+VVGL.Axis = function (length) {
+	VVGL.Mesh.call(this, VVGL.RenderMode.LINES);
+	
+	this.addPositions([
+		0.0, 0.0, 0.0,
+		length, 0.0, 0.0,
+		0.0, 0.0, 0.0,
+		0.0, length, 0.0,
+		0.0, 0.0, 0.0,
+		0.0, 0.0, length
+	]);
+	this.addColors([
+		1.0, 0.0, 0.0, 1.0,
+		1.0, 0.0, 0.0, 1.0,
+		0.0, 1.0, 0.0, 1.0,
+		0.0, 1.0, 0.0, 1.0,
+		0.0, 0.0, 1.0, 1.0,
+		0.0, 0.0, 1.0, 1.0
+	]);
+};
+
+VVGL.Axis.prototype = Object.create(VVGL.Mesh.prototype);
 /**
  * Represent a frame rendering.
  * Used by {@link VVGL.Renderer} to create a scene frame.
