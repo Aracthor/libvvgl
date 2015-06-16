@@ -103,6 +103,15 @@ VVGL.Application.prototype.getSceneManager = function () {
 };
 
 /**
+ * Get application WebGL renderer.
+ *
+ * @return {VVGL.Renderer} Application renderer.
+ */
+VVGL.Application.prototype.getRenderer = function () {
+    return (this.renderer);
+};
+
+/**
  * Lock mouse pointer once user will have clicked.
  */
 VVGL.Application.prototype.lockPointer = function () {
@@ -112,10 +121,17 @@ VVGL.Application.prototype.lockPointer = function () {
 /**
  * Disable mouse lock.
  * 
- * @todo todo.
+ * @todo unlock pointer for real.
  */
 VVGL.Application.prototype.unlockPointer = function () {
 	this.eventsManager.wantMouseLocked = false;
+};
+
+/**
+ * Prevent default keys actions (Reload for F5, quit on Ctrl+Q or Ctrl+W, etc)
+ */
+VVGL.Application.prototype.preventKeyActions = function () {
+    this.eventsManager.preventKeyActions();
 };
 
 /**
@@ -131,11 +147,22 @@ VVGL.Application.prototype.acceptReload = function () {
 
 /**
  * Static instance of the application.
- * 
+ *
  * @private
+ * @static
  * @type {VVGL.Application}
  */
 VVGL.Application.instance = null;
+
+/**
+ * Access application instance
+ *
+ * @static
+ * @return {VVGL.Application}
+ */
+VVGL.Application.access = function () {
+    return (VVGL.Application.instance);
+};
 
 /**
  * Recursive loop function called by {@see VVGL.Application.prototype.start}.

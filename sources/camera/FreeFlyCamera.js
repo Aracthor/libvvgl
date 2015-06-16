@@ -7,16 +7,16 @@
  */
 VVGL.FreeFlyCamera = function () {
 	VVGL.Camera.call(this);
-	
+
 	this.forward = new VVGL.Vec3();
 	this.left = new VVGL.Vec3();
 	this.move = new VVGL.Vec3();
-	
+
 	this.angleX = 0;
 	this.angleY = 0;
 	
 	this.recalcVectors();
-	
+
 	this.addKeyListener(VVGL.KeyCode.W, new VVGL.KeyEventListener(VVGL.FreeFlyCamera.advanceFront));
 	this.addKeyListener(VVGL.KeyCode.S, new VVGL.KeyEventListener(VVGL.FreeFlyCamera.advanceBack));
 	this.addKeyListener(VVGL.KeyCode.D, new VVGL.KeyEventListener(VVGL.FreeFlyCamera.advanceRight));
@@ -28,7 +28,7 @@ VVGL.FreeFlyCamera = function () {
 VVGL.FreeFlyCamera.prototype = Object.create(VVGL.Camera.prototype);
 
 /**
- * Coeficient between 1 and 0 proportional to movement inertia.
+ * Coefficient between 1 and 0 proportional to movement inertia.
  * 
  * @type {number}
  * @default
@@ -41,7 +41,7 @@ VVGL.FreeFlyCamera.prototype.inertiaCoef = 0.95;
  * @type {number}
  * @default
  */
-VVGL.FreeFlyCamera.prototype.speed = 1.0;
+VVGL.FreeFlyCamera.prototype.speed = 0.01;
 
 /**
  * Rotation speed.
@@ -49,7 +49,7 @@ VVGL.FreeFlyCamera.prototype.speed = 1.0;
  * @type {number}
  * @default
  */
-VVGL.FreeFlyCamera.prototype.sensitivity = 0.01;
+VVGL.FreeFlyCamera.prototype.sensitivity = 0.005;
 
 
 /**
@@ -82,13 +82,11 @@ VVGL.FreeFlyCamera.prototype.recalcVectors = function () {
  */
 VVGL.FreeFlyCamera.prototype.update = function (elapsedTime) {
 	var movementScale = this.speed * elapsedTime;
-	
-	this.move.scale(movementScale);
-	{
-		this.position.add(this.move);
-	}
-	this.move.scale(1.0 / movementScale);
-	
+
+    this.position.x += this.move.x * movementScale;
+    this.position.y += this.move.y * movementScale;
+    this.position.z += this.move.z * movementScale;
+
 	this.move.scale(this.inertiaCoef);
 	
 	this.recalcVectors();

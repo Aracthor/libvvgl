@@ -115,17 +115,23 @@ VVGL.IBindable.prototype.unbind = function () {
 /**
  * Renderable data linkable to {@link VVGL.SceneNode}
  * 
- * @interface
+ * @abstract
+ * @class
+ * @classdesc Renderable data.
+ * @param {string} type
+ * @todo pass to another folder.
  */
-VVGL.SceneData = function () {};
+VVGL.SceneData = function (type) {
+	this.type = type;
+};
 
 /**
- * Render function to override.
+ * Return data type name.
  * 
- * @param {VVGL.Renderer} renderer
+ * @return {string} Data type.
  */
-VVGL.SceneData.prototype.render = function (renderer) {
-	throw new VVGL.ImplementationException(this, "render", "SceneData");
+VVGL.SceneData.prototype.getType = function () {
+	return (this.type);
 };
 
 /**
@@ -155,18 +161,30 @@ VVGL.EventsManager = function (canvas) {
 	var me = this;
 	
 	// Keyboard events
-	document.addEventListener("keydown", function (event) {me.onKeyDown(event.keyCode); event.preventDefault();}, false);
+	document.addEventListener("keydown", function (event) {me.onKeyDown(event.keyCode); }, false);
 	document.addEventListener("keyup", function (event) {me.onKeyUp(event.keyCode);}, false);
-	
+
 	// Mouse events
 	canvas.addEventListener("mousemove", function (event) {me.onMouseMove(event);}, false);
 	canvas.addEventListener("mousedown", function (event) {me.onMouseDown(event);}, false);
 	canvas.addEventListener("mouseup", function (event) {me.onMouseUp(event);}, false);
+    canvas.addEventListener("wheel", function (event) {me.onWheel(event);}, false);
+
+    // Forbid context menu on right-click
+    canvas.addEventListener("contextmenu", function (event) {event.preventDefault(); }, false);
 	
 	// Lock events
 	document.addEventListener('pointerlockerror', me.onLockError, false);
 	document.addEventListener('mozpointerlockerror', me.onLockError, false);
 	document.addEventListener('webkitpointerlockerror', me.onLockError, false);
+};
+
+/**
+ * Prevent default keys actions (Reload for F5, quit on Ctrl+Q or Ctrl+W, etc)
+ */
+VVGL.EventsManager.prototype.preventKeyActions = function () {
+    document.addEventListener("keydown", function (event) {event.preventDefault(); }, false);
+    document.addEventListener("keyup", function (event) {event.preventDefault(); }, false);
 };
 
 /**
@@ -239,6 +257,10 @@ VVGL.EventsManager.prototype.onMouseDown = function (event) {
 		this.mouseLocked = true;
 		VVGL.Mouse.isLocked = true;
 	}
+
+    for (var i in this.eventsHandlers) {
+        this.eventsHandlers[i].onButtonPress(event.button, event.clientX, event.clientY);
+    }
 };
 
 /**
@@ -249,6 +271,23 @@ VVGL.EventsManager.prototype.onMouseDown = function (event) {
  */
 VVGL.EventsManager.prototype.onMouseUp = function (event) {
 	VVGL.Mouse.releaseButton(event.button);
+
+    for (var i in this.eventsHandlers) {
+        this.eventsHandlers[i].onButtonRelease(event.button, event.clientX, event.clientY);
+    }
+};
+
+/**
+ * Called on mouse wheel.
+ *
+ * @private
+ * @param {Object} event Wheel movement details.
+ * @todo handle firefox different values for delta.
+ */
+VVGL.EventsManager.prototype.onWheel = function (event) {
+    for (var i in this.eventsHandlers) {
+        this.eventsHandlers[i].onWheelMovement(event.clientX, event.clientY, event.deltaX, event.deltaY, event.deltaZ);
+    }
 };
 
 /**
@@ -277,11 +316,15 @@ VVGL.EventsManager.prototype.callKeyListeners = function () {
  * @classdesc May react to input events like keyboard, mouse etc.
  */
 VVGL.EventsHandler = function (manager) {
-	this.keyListeners = [];
-	this.keyPressListeners = [];
-	this.keyReleaseListeners = [];
-	this.mouseMovementListener = null;
-	
+    this.keyListeners = [];
+    this.keyPressListeners = [];
+    this.keyReleaseListeners = [];
+    this.buttonListeners = [];
+    this.buttonPressListeners = [];
+    this.buttonReleaseListeners = [];
+    this.mouseMovementListener = null;
+    this.wheelMovementListener = null;
+
 	if (!manager) {
 		var manager = VVGL.Application.instance.eventsManager;
 	}
@@ -300,7 +343,7 @@ VVGL.EventsHandler.prototype.addKeyListener = function (key, listener) {
 };
 
 /**
- * Add event listener to each time key start to be pressed.
+ * Add event listener to each time key start is pressed.
  * 
  * @param {VVGL.KeyCode} key
  * @param {VVGL.KeyEventListener} listener
@@ -320,6 +363,39 @@ VVGL.EventsHandler.prototype.addKeyReleaseListener = function (key, listener) {
 };
 
 /**
+ * Add event listener to each frame during button is pressed.
+ *
+ * @param {VVGL.MouseButton} button
+ * @param {VVGL.MouseButtonEventListener} listener
+
+ */
+VVGL.EventsHandler.prototype.addMouseButtonListener = function (button, listener) {
+    this.buttonListeners[button] = listener;
+};
+
+/**
+ * Add event listener to each time button is pressed.
+ *
+ * @param {VVGL.MouseButton} button
+ * @param {VVGL.MouseButtonEventListener} listener
+
+ */
+VVGL.EventsHandler.prototype.addMouseButtonPressListener = function (button, listener) {
+    this.buttonPressListeners[button] = listener;
+};
+
+/**
+ * Add event listener to each time button is released.
+ *
+ * @param {VVGL.MouseButton} button
+ * @param {VVGL.MouseButtonEventListener} listener
+
+ */
+VVGL.EventsHandler.prototype.addMouseButtonReleaseListener = function (button, listener) {
+    this.buttonReleaseListeners[button] = listener;
+};
+
+/**
  * Add mouse movement listener.
  * 
  * @param {VVGL.MouseMovementListener} listener
@@ -328,20 +404,46 @@ VVGL.EventsHandler.prototype.addMouseMovementListener = function (listener) {
 	this.mouseMovementListener = listener;	
 };
 
+/**
+ * Add wheel movement listener.
+ *
+ * @param {VVGL.WheelMovementListener} listener
+ */
+VVGL.EventsHandler.prototype.addWheelMovementListener = function (listener) {
+    this.wheelMovementListener = listener;
+};
+
 
 /**
  * Used to search a specific key listener, and execute it if exists.
- * 
+ *
  * @private
  * @param {Array} listeners
  * @param {VVGL.KeyCode} keyCode
  */
 VVGL.EventsHandler.prototype.onKeyEvent = function (listeners, keyCode) {
-	var listener = listeners[keyCode];
-	
-	if (listener) {
-		listener.onEvent(this);
-	};
+    var listener = listeners[keyCode];
+
+    if (listener) {
+        listener.onEvent(this);
+    };
+};
+
+/**
+ * Used to search a specific button listener, and execute it if exists.
+ *
+ * @private
+ * @param {Array} listeners
+ * @param {VVGL.MouseButton} button
+ * @param {number} x X mouse position
+ * @param {number} y Y mouse position
+ */
+VVGL.EventsHandler.prototype.onButtonEvent = function (listeners, button, x, y) {
+    var listener = listeners[button];
+
+    if (listener) {
+        listener.onEvent(this, x, y);
+    };
 };
 
 /**
@@ -354,7 +456,7 @@ VVGL.EventsHandler.prototype.onKey = function (keyCode) {
 };
 
 /**
- * Called by {VVGL.EventsManager} on key pression.
+ * Called by {VVGL.EventsManager} on key pressure.
  *
  * @param {VVGL.KeyCode} keyCode
  */
@@ -372,6 +474,39 @@ VVGL.EventsHandler.prototype.onKeyRelease = function (keyCode) {
 };
 
 /**
+ * Called by {VVGL.EventsManager} on frame where button is pressed.
+ *
+ * @param {VVGL.MouseButton} button
+ * @param {number} x
+ * @param {number} y
+ */
+VVGL.EventsHandler.prototype.onButton = function (button, x, y) {
+    this.onButtonEvent(this.buttonListeners, button, x, y);
+};
+
+/**
+ * Called by {VVGL.EventsManager} on mouse button pressure.
+ *
+ * @param {VVGL.MouseButton} button
+ * @param {number} x
+ * @param {number} y
+ */
+VVGL.EventsHandler.prototype.onButtonPress = function (button, x, y) {
+    this.onButtonEvent(this.buttonPressListeners, button, x, y);
+};
+
+/**
+ * Called by {VVGL.EventsManager} on mouse button release.
+ *
+ * @param {VVGL.MouseButton} button
+ * @param {number} x
+ * @param {number} y
+ */
+VVGL.EventsHandler.prototype.onButtonRelease = function (button, x, y) {
+    this.onButtonEvent(this.buttonReleaseListeners, button, x, y);
+};
+
+/**
  * Called by {VVGL.EventsManager} on mouse movement.
  * Call its own mouseMovementListener.
  * 
@@ -382,6 +517,22 @@ VVGL.EventsHandler.prototype.onMouseMovement = function (x, y) {
 	if (this.mouseMovementListener !== null) {
 		this.mouseMovementListener.onEvent(this, x, y);
 	}
+};
+
+/**
+ * Called by {VVGL.EventsManager} on mouse movement.
+ * Call its own wheelMovementListener.
+ *
+ * @param {number} x
+ * @param {number} y
+ * @param {number} deltaX
+ * @param {number} deltaY
+ * @param {number} deltaZ
+ */
+VVGL.EventsHandler.prototype.onWheelMovement = function (x, y, deltaX, deltaY, deltaZ) {
+    if (this.wheelMovementListener !== null) {
+        this.wheelMovementListener.onEvent(this, x, y, deltaX, deltaY, deltaZ);
+    }
 };
 /**
  * Static object regrouping keyboard functions.
@@ -496,6 +647,24 @@ VVGL.Mouse.releaseButton = function (button) {
 };
 /**
  * @class
+ * @classdesc Handle a mouse button event.
+ * @see {@link VVGL.EventsHandler}
+ * @param {function} onEvent Function to call on event.
+ */
+VVGL.MouseButtonEventListener = function (onEvent) {
+    this.onEvent = onEvent;
+};
+
+/**
+ * Called on matching mouse button event.
+ *
+ * @param {VVGL.EventsHandler} data Object that was listening.
+ */
+VVGL.MouseButtonEventListener.prototype.onEvent = function (data, x, y) {
+    this.onEvent(data, x, y);
+};
+/**
+ * @class
  * @classdesc Handle a mouse movement.
  * @param {function} onEvent Function to call on event.
  */
@@ -510,8 +679,31 @@ VVGL.MouseMovementListener = function (onEvent) {
  * @param {number} x X movement.
  * @param {number} y Y movement.
  */
-VVGL.KeyEventListener.prototype.onEvent = function (data, x, y) {
+VVGL.MouseMovementListener.prototype.onEvent = function (data, x, y) {
 	throw new VVGL.ImplementationException(this, "onEvent", "MouseMovementListener");
+};
+/**
+ * @class
+ * @classdesc Handle a wheel movement.
+ * @param {function} onEvent Function to call on event.
+ */
+VVGL.WheelMovementListener = function (onEvent) {
+    this.onEvent = onEvent;
+};
+
+/**
+ * Called on wheel movement.
+ *
+ * @param {VVGL.EventsHandler} data Object that was listening.
+ * @param {number} x X movement.
+ * @param {number} y Y movement.
+ * @param {number} deltaX horizontal scrolling.
+ * @param {number} deltaY vertical scrolling.
+ * @param {number} deltaZ I have no idea.
+ * @todo Understand what a hell could be deltaZ
+ */
+VVGL.WheelMovementListener.prototype.onEvent = function (data, x, y, deltaX, deltaY, deltaZ) {
+    throw new VVGL.ImplementationException(this, "onEvent", "WheelMovementListener");
 };
 /**
  * Super singleton manager of canvas, graphic and physic engine.
@@ -618,6 +810,15 @@ VVGL.Application.prototype.getSceneManager = function () {
 };
 
 /**
+ * Get application WebGL renderer.
+ *
+ * @return {VVGL.Renderer} Application renderer.
+ */
+VVGL.Application.prototype.getRenderer = function () {
+    return (this.renderer);
+};
+
+/**
  * Lock mouse pointer once user will have clicked.
  */
 VVGL.Application.prototype.lockPointer = function () {
@@ -627,10 +828,17 @@ VVGL.Application.prototype.lockPointer = function () {
 /**
  * Disable mouse lock.
  * 
- * @todo todo.
+ * @todo unlock pointer for real.
  */
 VVGL.Application.prototype.unlockPointer = function () {
 	this.eventsManager.wantMouseLocked = false;
+};
+
+/**
+ * Prevent default keys actions (Reload for F5, quit on Ctrl+Q or Ctrl+W, etc)
+ */
+VVGL.Application.prototype.preventKeyActions = function () {
+    this.eventsManager.preventKeyActions();
 };
 
 /**
@@ -646,11 +854,22 @@ VVGL.Application.prototype.acceptReload = function () {
 
 /**
  * Static instance of the application.
- * 
+ *
  * @private
+ * @static
  * @type {VVGL.Application}
  */
 VVGL.Application.instance = null;
+
+/**
+ * Access application instance
+ *
+ * @static
+ * @return {VVGL.Application}
+ */
+VVGL.Application.access = function () {
+    return (VVGL.Application.instance);
+};
 
 /**
  * Recursive loop function called by {@see VVGL.Application.prototype.start}.
@@ -713,9 +932,10 @@ VVGL.fusionClasses = function (prototype1, prototype2) {
  * 
  * @class
  * @extends VVGL.EventsHandler
- * @implements VVGL.SceneData
+ * @extends VVGL.SceneData
  */
 VVGL.Camera = function () {
+	VVGL.SceneData.call(this, "camera");
 	VVGL.EventsHandler.call(this);
 	
 	this.perspective = new VVGL.Mat4();
@@ -805,16 +1025,6 @@ VVGL.Camera.prototype.getView = function () {
 	this.view.lookAt(this.position, this.target, this.up);
 	return (this.view);
 };
-
-
-/**
- * Render object to scene.
- * No effect for camera.
- * 
- * @override
- * @param {VVGL.Renderer} renderer
- */
-VVGL.Camera.prototype.render = function (renderer) {};
 /**
  * Camera with target fixed to a point,
  * With position turning around with mouse movements.
@@ -824,16 +1034,16 @@ VVGL.Camera.prototype.render = function (renderer) {};
  */
 VVGL.FreeFlyCamera = function () {
 	VVGL.Camera.call(this);
-	
+
 	this.forward = new VVGL.Vec3();
 	this.left = new VVGL.Vec3();
 	this.move = new VVGL.Vec3();
-	
+
 	this.angleX = 0;
 	this.angleY = 0;
 	
 	this.recalcVectors();
-	
+
 	this.addKeyListener(VVGL.KeyCode.W, new VVGL.KeyEventListener(VVGL.FreeFlyCamera.advanceFront));
 	this.addKeyListener(VVGL.KeyCode.S, new VVGL.KeyEventListener(VVGL.FreeFlyCamera.advanceBack));
 	this.addKeyListener(VVGL.KeyCode.D, new VVGL.KeyEventListener(VVGL.FreeFlyCamera.advanceRight));
@@ -845,7 +1055,7 @@ VVGL.FreeFlyCamera = function () {
 VVGL.FreeFlyCamera.prototype = Object.create(VVGL.Camera.prototype);
 
 /**
- * Coeficient between 1 and 0 proportional to movement inertia.
+ * Coefficient between 1 and 0 proportional to movement inertia.
  * 
  * @type {number}
  * @default
@@ -858,7 +1068,7 @@ VVGL.FreeFlyCamera.prototype.inertiaCoef = 0.95;
  * @type {number}
  * @default
  */
-VVGL.FreeFlyCamera.prototype.speed = 1.0;
+VVGL.FreeFlyCamera.prototype.speed = 0.01;
 
 /**
  * Rotation speed.
@@ -866,7 +1076,7 @@ VVGL.FreeFlyCamera.prototype.speed = 1.0;
  * @type {number}
  * @default
  */
-VVGL.FreeFlyCamera.prototype.sensitivity = 0.01;
+VVGL.FreeFlyCamera.prototype.sensitivity = 0.005;
 
 
 /**
@@ -899,13 +1109,11 @@ VVGL.FreeFlyCamera.prototype.recalcVectors = function () {
  */
 VVGL.FreeFlyCamera.prototype.update = function (elapsedTime) {
 	var movementScale = this.speed * elapsedTime;
-	
-	this.move.scale(movementScale);
-	{
-		this.position.add(this.move);
-	}
-	this.move.scale(1.0 / movementScale);
-	
+
+    this.position.x += this.move.x * movementScale;
+    this.position.y += this.move.y * movementScale;
+    this.position.z += this.move.z * movementScale;
+
 	this.move.scale(this.inertiaCoef);
 	
 	this.recalcVectors();
@@ -987,11 +1195,160 @@ VVGL.FreeFlyCamera.turnCamera = function (camera, x, y) {
  */
 VVGL.TrackballCamera = function () {
 	VVGL.Camera.call(this);
-	
-	this.position.x = -10;
+
+    this.move = new VVGL.Vec2();
+
+    this.addMouseButtonPressListener(VVGL.MouseButton.LEFT, new VVGL.MouseButtonEventListener(VVGL.TrackballCamera.stop));
+    this.addMouseMovementListener(new VVGL.MouseMovementListener(VVGL.TrackballCamera.turn));
+    this.addWheelMovementListener(new VVGL.WheelMovementListener(VVGL.TrackballCamera.zoom));
+
+    this.recalcVectors();
 };
 
 VVGL.TrackballCamera.prototype = Object.create(VVGL.Camera.prototype);
+
+/**
+ * Distance between center and position.
+ * Or radius of camera's sphere.
+ *
+ * @type {number}
+ * @default
+ */
+VVGL.TrackballCamera.prototype.distance = 10;
+
+/**
+ * Horizontal and vertical rotation speeds.
+ *
+ * @type {number}
+ * @default
+ */
+VVGL.TrackballCamera.prototype.rotationSpeed = 0.0001;
+
+/**
+ * Zoom speed.
+ *
+ * @type {number}
+ * @default
+ */
+VVGL.TrackballCamera.prototype.zoomSpeed = 0.1;
+
+/**
+ * Coefficient between 1 and 0 proportional to movement inertia.
+ *
+ * @type {number}
+ * @default
+ */
+VVGL.TrackballCamera.prototype.inertiaCoef = 0.95;
+
+/**
+ * Horizontal angle.
+ * Defined in radians.
+ *
+ * @type {number}
+ * @default
+ */
+VVGL.TrackballCamera.prototype.angleX = 0;
+
+/**
+ * Vertical angle.
+ * Defined in radians.
+ *
+ * @type {number}
+ * @default
+ */
+VVGL.TrackballCamera.prototype.angleY = 0;
+
+/**
+ * Recalc camera position from target and angles.
+ *
+ * @private
+ * @todo Use math helper to trigonometry.
+ */
+VVGL.TrackballCamera.prototype.recalcVectors = function () {
+    this.position.x = Math.cos(this.angleY) * Math.cos(this.angleX);
+    this.position.y = Math.cos(this.angleY) * Math.sin(this.angleX);
+    this.position.z = Math.sin(this.angleY);
+    this.position.scale(this.distance);
+    this.position.add(this.target);
+
+    this.move.scale(this.inertiaCoef);
+};
+
+/**
+ * Update camera data.
+ * Move position if camera was turning,
+ * update movement with inertia,
+ * and recalc other vectors.
+ *
+ * @override
+ * @param {number} elapsedTime
+ */
+VVGL.TrackballCamera.prototype.update = function (elapsedTime) {
+    var yMax = VVGL.Maths.PI / 2 - 0.01;
+    this.angleX += this.move.x * elapsedTime;
+    this.angleY += this.move.y * elapsedTime;
+
+    if (this.angleY > yMax) {
+        this.angleY = yMax;
+    } else if (this.angleY < -yMax) {
+        this.angleY = -yMax;
+    }
+
+    this.recalcVectors();
+};
+
+/**
+ * Turn camera mouse movement listener.
+ *
+ * @private
+ * @static
+ * @param {VVGL.TrackballCamera} camera
+ * @param {number} x
+ * @param {number} y
+ */
+VVGL.TrackballCamera.turn = function (camera, x, y) {
+    if (VVGL.Mouse.isLocked || VVGL.Mouse.buttonIsPressed(VVGL.MouseButton.LEFT)) {
+        camera.move.x += x * camera.rotationSpeed;
+        camera.move.y -= y * camera.rotationSpeed;
+    }
+};
+
+/**
+ * Stop camera mouse pressure listener.
+ *
+ * @private
+ * @static
+ * @param {VVGL.TrackballCamera} camera
+ * @param {number} x X mouse position
+ * @param {number} y Y mouse position
+ */
+VVGL.TrackballCamera.stop = function (camera, x, y) {
+    camera.move.x = 0;
+    camera.move.y = 0;
+};
+
+/**
+ * Zoom camera wheel movement listener.
+ *
+ * @private
+ * @static
+ * @param {VVGL.TrackballCamera} camera
+ * @param {number} x X mouse position
+ * @param {number} y Y mouse position
+ * @param {number} deltaX Horizontal scroll
+ * @param {number} deltaY Vertical scroll
+ * @param {number} deltaZ No idea
+ */
+VVGL.TrackballCamera.zoom = function (camera, x, y, deltaX, deltaY, deltaZ) {
+    while (deltaY > 0) {
+        camera.distance += camera.distance * camera.zoomSpeed;
+        --deltaY;
+    }
+    while (deltaY < 0) {
+        camera.distance -= camera.distance * camera.zoomSpeed;
+        ++deltaY;
+    }
+};
 /**
  * Functions for color-integer manipulation.
  * 
@@ -1272,9 +1629,8 @@ VVGL.Exception.prototype.what = function () {
 	return (this.message);
 };
 /**
- * Handle interns OpenGL errors.
- * 
  * @class
+ * @classdesc Handle interns OpenGL errors.
  * @extends VVGL.Exception
  * @private
  */
@@ -1319,9 +1675,8 @@ VVGL.GLErrorException.checkError = function (func) {
 	}
 };
 /**
- * Exception throwed on ressource initialisation fail.
- * 
  * @class
+ * @classdesc Exception throwed on ressource initialisation fail.
  * @extends VVGL.Exception
  * @param {Object} object Ressource linked to problem.
  * @param {string} message Problem resume.
@@ -1367,6 +1722,327 @@ VVGL.ImplementationException.prototype.what = function () {
 	return (VVGL.Exception.prototype.what.call(this));
 };
 /**
+ * @class
+ * @extends VVGL.SceneData
+ * @classdesc Abstract base class for all lights.
+ * @param {string} name Uniform name in shader.
+ */
+VVGL.Light = function (name) {
+	VVGL.SceneData.call(this, "light");
+	this.name = name;
+	this.color = VVGL.Color.white.clone();
+};
+
+VVGL.Light.prototype = Object.create(VVGL.SceneData.prototype);
+
+/**
+ * @type {VVGL.Color}
+ * @default
+ */
+VVGL.Light.prototype.color = VVGL.Color.white;
+
+/**
+ * Send light data to shader.
+ * 
+ * @abstract
+ * @param {VVGL.ShaderProgram} shader
+ */
+VVGL.Light.prototype.sendToShader = function (shader) {
+	throw VVGL.ImplementationException(this, "sendToShader", "Light");
+};
+/**
+ * @class
+ * @classdesc Minimum light level for all vertices.
+ * @extends VVGL.Light
+ * @param {string} name Uniform name in shader.
+ */
+VVGL.AmbianceLight = function (name) {
+	VVGL.Light.call(this, name);
+};
+
+VVGL.AmbianceLight.prototype = Object.create(VVGL.Light.prototype);
+
+/**
+ * Send data to shader.
+ * 
+ * @override
+ * @param {VVGL.ShaderProgram} shader
+ */
+VVGL.AmbianceLight.prototype.sendToShader = function (shader) {
+	shader.setColorUniform(this.name + ".color", this.color);
+};
+
+/**
+ * Do nothing for ambiance light.
+ * 
+ * @param {number} elapsedTime Elapsed miliseconds from last frame.
+ */
+VVGL.AmbianceLight.prototype.update = function (elapsedTime) {};
+/**
+ * @class
+ * @classdesc Light from a specific Direction.
+ * @extends VVGL.Light
+ * @param {string} name Uniform name in shader.
+ */
+VVGL.DirectionLight = function (name) {
+	VVGL.Light.call(this, name);
+	this.direction = new VVGL.Vec3();
+};
+
+VVGL.DirectionLight.prototype = Object.create(VVGL.Light.prototype);
+
+/**
+ * @type {VVGL.Vec3}
+ */
+VVGL.DirectionLight.prototype.direction = null;
+
+/**
+ * Send data to shader.
+ * 
+ * @override
+ * @param {VVGL.ShaderProgram} shader
+ */
+VVGL.DirectionLight.prototype.sendToShader = function (shader) {
+	shader.setColorUniform(this.name + ".color", this.color);
+	shader.setVector3Uniform(this.name + ".direction", this.direction);
+};
+
+/**
+ * Do nothing for direction light.
+ * 
+ * @todo maybe update direction ?
+ * @param {number} elapsedTime Elapsed miliseconds from last frame.
+ */
+VVGL.DirectionLight.prototype.update = function (elapsedTime) {};
+/**
+ * @class
+ * @classdesc Light from a specific spot.
+ * @extends VVGL.Light
+ * @param {string} name Uniform name in shader.
+ */
+VVGL.SpotLight = function (name) {
+	VVGL.Light.call(this, name);
+	this.position = new VVGL.Vec3();
+};
+
+VVGL.SpotLight.prototype = Object.create(VVGL.Light.prototype);
+
+/**
+ * @type {VVGL.Vec3}
+ */
+VVGL.SpotLight.prototype.position = null;
+
+/**
+ * @type {VVGL.Vec4}
+ * @default
+ */
+VVGL.SpotLight.prototype.power = 1.0;
+
+/**
+ * Send data to shader.
+ * 
+ * @override
+ * @param {VVGL.ShaderProgram} shader
+ */
+VVGL.SpotLight.prototype.sendToShader = function (shader) {
+	shader.setFloatUniform(this.name + ".power", this.power);
+	shader.setColorUniform(this.name + ".color", this.color);
+	shader.setVector3Uniform(this.name + ".position", this.position);
+};
+
+/**
+ * Update light position from model matrix.
+ * 
+ * @todo update position
+ * @param {number} elapsedTime Elapsed miliseconds from last frame.
+ */
+VVGL.SpotLight.prototype.update = function (elapsedTime) {
+};
+/**
+ * A 4x4 float matrix.
+ * Created as an identity matrix.
+ * 
+ * @class
+ */
+VVGL.Mat3 = function () {
+	this.data = new Float32Array(3 * 3);
+	
+	this.identity();
+};
+
+/**
+ * Set a Mat3 to the identity matrix.
+ */
+VVGL.Mat3.prototype.identity = function () {
+	var data = this.data;
+	
+	data[0] = 1; data[1] = 0; data[2] = 0;
+	data[3] = 0; data[4] = 1; data[5] = 0;
+	data[6] = 0; data[7] = 0; data[8] = 1;
+};
+
+/**
+ * Copy matrix data to another preallocated matrix object.
+ * 
+ * @param {VVGL.Mat3} destination
+ */
+VVGL.Mat3.prototype.copyTo = function (destination) {
+	for (var i = 0; i < 9; ++i) {
+		destination.data[i] = this.data[i];
+	}
+};
+
+/**
+ * Return a copy of this matrix.
+ * 
+ * @return {VVGL.Mat3} Copy.
+ */
+VVGL.Mat3.prototype.clone = function () {
+	var clone = new VVGL.Mat3();
+	
+	this.copyTo(clone);
+	
+	return (clone);
+};
+
+/**
+ * Copy 4x4 matrix content to 3x3 matrix.
+ * 
+ * @param {VVGL.Mat4} matrix
+ */
+VVGL.Mat3.prototype.fromMat4 = function (matrix) {
+	var dest = this.data;
+	var src = matrix.data;
+	
+	dest[0] = src[ 0];
+	dest[1] = src[ 1];
+	dest[2] = src[ 2];
+	dest[3] = src[ 4];
+	dest[4] = src[ 5];
+	dest[5] = src[ 6];
+	dest[6] = src[ 8];
+	dest[7] = src[ 9];
+	dest[8] = src[10];
+};
+
+/**
+ * Convert 4x4 matrix to 3x3 normal matrix.
+ * 
+ * @param {VVGL.Mat4} matrix Model matrix.
+ */
+VVGL.Mat3.prototype.normalFromMat4 = function (matrix) {
+    var dest = this.data,
+    	src = matrix.data,
+    	a00 = src[0], a01 = src[1], a02 = src[2], a03 = src[3],
+        a10 = src[4], a11 = src[5], a12 = src[6], a13 = src[7],
+        a20 = src[8], a21 = src[9], a22 = src[10], a23 = src[11],
+        a30 = src[12], a31 = src[13], a32 = src[14], a33 = src[15],
+
+        b00 = a00 * a11 - a01 * a10,
+        b01 = a00 * a12 - a02 * a10,
+        b02 = a00 * a13 - a03 * a10,
+        b03 = a01 * a12 - a02 * a11,
+        b04 = a01 * a13 - a03 * a11,
+        b05 = a02 * a13 - a03 * a12,
+        b06 = a20 * a31 - a21 * a30,
+        b07 = a20 * a32 - a22 * a30,
+        b08 = a20 * a33 - a23 * a30,
+        b09 = a21 * a32 - a22 * a31,
+        b10 = a21 * a33 - a23 * a31,
+        b11 = a22 * a33 - a23 * a32,
+
+        delta = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+
+    if (delta === 0) { 
+        throw new VVGL.Exception("MATHS ERROR: Null determinant calculing normal matrix."); 
+    }
+    delta = 1.0 / delta;
+
+    dest[0] = (a11 * b11 - a12 * b10 + a13 * b09) * delta;
+    dest[1] = (a12 * b08 - a10 * b11 - a13 * b07) * delta;
+    dest[2] = (a10 * b10 - a11 * b08 + a13 * b06) * delta;
+
+    dest[3] = (a02 * b10 - a01 * b11 - a03 * b09) * delta;
+    dest[4] = (a00 * b11 - a02 * b08 + a03 * b07) * delta;
+    dest[5] = (a01 * b08 - a00 * b10 - a03 * b06) * delta;
+
+    dest[6] = (a31 * b05 - a32 * b04 + a33 * b03) * delta;
+    dest[7] = (a32 * b02 - a30 * b05 - a33 * b01) * delta;
+    dest[8] = (a30 * b04 - a31 * b02 + a33 * b00) * delta;
+};
+
+/**
+ * Transpose matrix data.
+ * (Vertical become horizontal).
+ */
+VVGL.Mat3.prototype.transpose = function () {
+	var data = this.data,
+		data01 = data[1],
+		data02 = data[2],
+		data12 = data[5];
+		
+	data[1] = data[3];
+	data[2] = data[6];
+	data[3] = data01;
+	data[5] = data[7];
+	data[6] = data02;
+	data[7] = data12;
+};
+
+/**
+ * Invert matrix data.
+ */
+VVGL.Mat3.prototype.invert = function () {
+	var data = this.data,
+		a00 = data[0], a01 = data[1], a02 = data[2],
+        a10 = data[3], a11 = data[4], a12 = data[5],
+        a20 = data[6], a21 = data[7], a22 = data[8],
+        
+        b01 = a22 * a11 - a12 * a21,
+        b11 = -a22 * a10 + a12 * a20,
+        b21 = a21 * a10 - a11 * a20,
+        
+        delta = a00 * b01 + a01 * b11 + a02 * b21;
+        
+    if (delta === 0) {
+    	throw new VVGL.Exception("MATHS ERROR: Error inversing Mat3: null deteminent");
+    }
+    
+    delta = 1.0 / delta;
+    
+    data[0] = b01 * delta;
+    data[1] = (-a22 * a01 + a02 * a21) * delta;
+    data[2] = (a12 * a01 - a02 * a11) * delta;
+    data[3] = b11 * delta;
+    data[4] = (a22 * a00 - a02 * a20) * delta;
+    data[5] = (-a12 * a00 + a02 * a10) * delta;
+    data[6] = b21 * delta;
+    data[7] = (-a21 * a00 + a01 * a20) * delta;
+    data[8] = (a11 * a00 - a01 * a10) * delta;
+};
+
+/**
+ * Return matrix data as float array.
+ * 
+ * @return {Array} data as float array.
+ */
+VVGL.Mat3.prototype.toArray = function () {
+	return (this.data);
+};
+
+/**
+ * Convert matrix data to a readable string.
+ * 
+ * @return {string}
+ */
+VVGL.Mat3.prototype.toString = function () {
+	var data = this.data;
+	
+	return ("(" + data[0] + "," + data[1] + "," + data[2] + ")\n" +
+			"(" + data[3] + "," + data[4] + "," + data[5] + ")\n" +
+			"(" + data[6] + "," + data[7] + "," + data[8] + ")\n");
+};
+/**
  * A 4x4 float matrix.
  * Created as an identity matrix.
  * 
@@ -1388,6 +2064,174 @@ VVGL.Mat4.prototype.identity = function () {
 	data[ 4] = 0; data[ 5] = 1; data[ 6] = 0; data[ 7] = 0;
 	data[ 8] = 0; data[ 9] = 0; data[10] = 1; data[11] = 0;
 	data[12] = 0; data[13] = 0; data[14] = 0; data[15] = 1;
+};
+
+/**
+ * Translate by a 3D-vector.
+ * 
+ * @param {VVGL.Vec3} vector Translation vector.
+ */
+VVGL.Mat4.prototype.translate = function (vector) {
+    var x = vector.x,
+    	y = vector.y,
+    	z = vector.z,
+    	data = this.data;
+
+    data[12] = data[0] * x + data[4] * y + data[8] * z + data[12];
+    data[13] = data[1] * x + data[5] * y + data[9] * z + data[13];
+    data[14] = data[2] * x + data[6] * y + data[10] * z + data[14];
+    data[15] = data[3] * x + data[7] * y + data[11] * z + data[15];
+};
+
+/**
+ * Rotate on X axis by an angle.
+ * 
+ * @param {number} angle Angle in radians.
+ * @todo precalc angles.
+ */
+VVGL.Mat4.prototype.rotateX = function (angle) {
+	var sinus = Math.sin(angle),
+		cosinus = Math.cos(angle),
+		data = this.data,
+        a10 = data[4],
+        a11 = data[5],
+        a12 = data[6],
+        a13 = data[7],
+        a20 = data[8],
+        a21 = data[9],
+        a22 = data[10],
+        a23 = data[11];
+
+    data[4] = a10 * cosinus + a20 * sinus;
+    data[5] = a11 * cosinus + a21 * sinus;
+    data[6] = a12 * cosinus + a22 * sinus;
+    data[7] = a13 * cosinus + a23 * sinus;
+    data[8] = a20 * cosinus - a10 * sinus;
+    data[9] = a21 * cosinus - a11 * sinus;
+    data[10] = a22 * cosinus - a12 * sinus;
+    data[11] = a23 * cosinus - a13 * sinus;
+};
+
+/**
+ * Rotate on Y axis by an angle.
+ * 
+ * @param {number} angle Angle in radians.
+ * @todo precalc angles.
+ */
+VVGL.Mat4.prototype.rotateY = function (angle) {
+    var sinus = Math.sin(angle),
+        cosinus = Math.cos(angle),
+        data = this.data,
+        a00 = data[0],
+        a01 = data[1],
+        a02 = data[2],
+        a03 = data[3],
+        a20 = data[8],
+        a21 = data[9],
+        a22 = data[10],
+        a23 = data[11];
+
+    data[0] = a00 * cosinus - a20 * sinus;
+    data[1] = a01 * cosinus - a21 * sinus;
+    data[2] = a02 * cosinus - a22 * sinus;
+    data[3] = a03 * cosinus - a23 * sinus;
+    data[8] = a00 * sinus + a20 * cosinus;
+    data[9] = a01 * sinus + a21 * cosinus;
+    data[10] = a02 * sinus + a22 * cosinus;
+    data[11] = a03 * sinus + a23 * cosinus;
+};
+
+/**
+ * Rotate on Z axis by an angle.
+ * 
+ * @param {number} angle Angle in radians.
+ * @todo precalc angles.
+ */
+VVGL.Mat4.prototype.rotateZ = function (angle) {
+    var sinus = Math.sin(angle),
+        cosinus = Math.cos(angle),
+        data = this.data,
+        a00 = data[0],
+        a01 = data[1],
+        a02 = data[2],
+        a03 = data[3],
+        a10 = data[4],
+        a11 = data[5],
+        a12 = data[6],
+        a13 = data[7];
+
+    data[0] = a00 * cosinus + a10 * sinus;
+    data[1] = a01 * cosinus + a11 * sinus;
+    data[2] = a02 * cosinus + a12 * sinus;
+    data[3] = a03 * cosinus + a13 * sinus;
+    data[4] = a10 * cosinus - a00 * sinus;
+    data[5] = a11 * cosinus - a01 * sinus;
+    data[6] = a12 * cosinus - a02 * sinus;
+    data[7] = a13 * cosinus - a03 * sinus;
+};
+
+/**
+ * Scale by a vector.
+ * 
+ * @param {VVGL.Vec3} vector
+ */
+VVGL.Mat4.prototype.scale = function (vector) {
+    var x = vector.x,
+    	y = vector.y,
+    	z = vector.z,
+    	data = this.data;
+
+    data[0] *= x;
+    data[1] *= x;
+    data[2] *= x;
+    data[3] *= x;
+    data[4] *= y;
+    data[5] *= y;
+    data[6] *= y;
+    data[7] *= y;
+    data[8] *= z;
+    data[9] *= z;
+    data[10] *= z;
+    data[11] *= z;
+};
+
+/**
+ * Multiply matrix by another.
+ * 
+ * @param {VVGL.Mat4} matrix
+ */
+VVGL.Mat4.prototype.multiply = function (matrix) {
+    var data = this.data,
+    	b = matrix.data,
+    	a00 =  data[0], a01 =  data[1], a02 =  data[2], a03 =  data[3],
+        a10 =  data[4], a11 =  data[5], a12 =  data[6], a13 =  data[7],
+        a20 =  data[8], a21 =  data[9], a22 =  data[10], a23 =  data[11],
+        a30 =  data[12], a31 =  data[13], a32 =  data[14], a33 =  data[15];
+
+    // Cache only the current line of the second matrix
+    var b0  =  b[0], b1 =  b[1], b2 =  b[2], b3 =  b[3];  
+     data[0] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+     data[1] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+     data[2] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+     data[3] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+
+    b0 =  b[4]; b1 =  b[5]; b2 =  b[6]; b3 =  b[7];
+     data[4] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+     data[5] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+     data[6] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+     data[7] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+
+    b0 =  b[8]; b1 =  b[9]; b2 =  b[10]; b3 =  b[11];
+     data[8] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+     data[9] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+     data[10] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+     data[11] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+
+    b0 =  b[12]; b1 =  b[13]; b2 =  b[14]; b3 =  b[15];
+     data[12] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+     data[13] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+     data[14] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+     data[15] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
 };
 
 /**
@@ -1509,6 +2353,17 @@ VVGL.Mat4.prototype.lookAt = function (position, target, up) {
 };
 
 /**
+ * Copy matrix data to another preallocated matrix object.
+ * 
+ * @param {VVGL.Mat4} destination
+ */
+VVGL.Mat4.prototype.copyTo = function (destination) {
+	for (var i = 0; i < 16; ++i) {
+		destination.data[i] = this.data[i];
+	}
+};
+
+/**
  * Return a copy of this matrix.
  * 
  * @return {VVGL.Mat4} Copy.
@@ -1516,7 +2371,7 @@ VVGL.Mat4.prototype.lookAt = function (position, target, up) {
 VVGL.Mat4.prototype.clone = function () {
 	var clone = new VVGL.Mat4();
 	
-	clone.data = this.data.slice();
+	this.copyTo(clone);
 	
 	return (clone);
 };
@@ -1529,6 +2384,20 @@ VVGL.Mat4.prototype.clone = function () {
 VVGL.Mat4.prototype.toArray = function () {
 	return (this.data);
 };
+
+/**
+ * Convert matrix data to a readable string.
+ * 
+ * @return {string}
+ */
+VVGL.Mat4.prototype.toString = function () {
+	var data = this.data;
+	
+	return ("(" + data[0] + "," + data[1] + "," + data[2] + "," + data[3] + ")\n" +
+			"(" + data[4] + "," + data[5] + "," + data[6] + "," + data[7] + ")\n" +
+			"(" + data[8] + "," + data[9] + "," + data[10] + "," + data[11] + ")\n" +
+			"(" + data[12] + "," + data[13] + "," + data[14] + "," + data[15] + ")\n");
+};
 /**
  * Maths help functions and numbers.
  * 
@@ -1538,13 +2407,119 @@ VVGL.Maths = {};
 
 VVGL.Maths.PI = 3.14159265359;
 /**
+ * A 4-dimensional vector.
+ *
+ * @class A 4-dimensional vector.
+ * @constructor
+ * @param {number} [0] x X-axis value.
+ * @param {number} [0] y Y-axis value.
+ */
+VVGL.Vec2 = function (x, y) {
+    if (x !== undefined) {
+        this.x = x;
+        this.y = y;
+    }
+
+};
+
+/**
+ * X-axis value.
+ *
+ * @type {number}
+ */
+VVGL.Vec2.prototype.x = 0.0;
+
+/**
+ * Y-axis value.
+ *
+ * @type {number}
+ */
+VVGL.Vec2.prototype.y = 0.0;
+
+
+/**
+ * Add another vector to this one.
+ *
+ * @param {VVGL.Vec2} vector
+ */
+VVGL.Vec2.prototype.add = function (vector) {
+    this.x += vector.x;
+    this.y += vector.y;
+};
+
+/**
+ * Substract another vector to this one.
+ *
+ * @param {VVGL.Vec2} vector
+ */
+VVGL.Vec2.prototype.sub = function (vector) {
+    this.x -= vector.x;
+    this.y -= vector.y;
+};
+
+/**
+ * Scale vector by a number.
+ *
+ * @param {number} n
+ */
+VVGL.Vec2.prototype.scale = function (n) {
+    this.x *= n;
+    this.y *= n;
+};
+
+/**
+ * Copy vector data to another.
+ *
+ * @param {VVGL.Vec2} vector
+ */
+VVGL.Vec2.prototype.copyTo = function (vector) {
+    vector.x = this.x;
+    vector.y = this.y;
+};
+
+/**
+ * Calc and return vector's norm.
+ *
+ * @return {number} Vector's norm.
+ */
+VVGL.Vec2.prototype.getNorm = function () {
+    return (Math.sqrt(this.x * this.x + this.y * this.y));
+};
+
+/**
+ * Normalize vector, making its norm to 1.
+ */
+VVGL.Vec2.prototype.normalize = function () {
+    var norm = this.getNorm();
+    this.scale(1 / norm);
+};
+
+/**
+ * Create copy of this vector.
+ *
+ * @return {VVGL.Vec2} Copy.
+ */
+VVGL.Vec2.prototype.clone = function () {
+    return (new VVGL.Vec2(this.x, this.y));
+};
+
+/**
+ * Convert vector to a data array.
+ *
+ * @return {Array} A float array containing the three vector's values.
+ */
+VVGL.Vec2.prototype.toArray = function () {
+    return ([this.x, this.y]);
+};
+
+/**
  * A 3-dimensional vector.
  * 
  * @class A 3-dimensional vector.
  * @constructor
- * @param {number} x X-axis value.
- * @param {number} y Y-axis value.
- * @param {number} z Z-axis value.
+ * @param {number} [0] x X-axis value.
+ * @param {number} [0] y Y-axis value.
+ * @param {number} [0] z Z-axis value.
  */
 VVGL.Vec3 = function (x, y, z) {
 	if (x !== undefined) {
@@ -1687,6 +2662,137 @@ VVGL.Vec3.crossProduct = function (u, v) {
 						  u.x * v.y - u.y * v.x));
 };
 /**
+ * A 4-dimensional vector.
+ * 
+ * @class A 4-dimensional vector.
+ * @constructor
+ * @param {number} [0] x X-axis value.
+ * @param {number} [0] y Y-axis value.
+ * @param {number} [0] z Z-axis value.
+ * @param {number} [0] w W-axis value.
+ */
+VVGL.Vec4 = function (x, y, z, w) {
+	if (x !== undefined) {
+		this.x = x;
+		this.y = y;
+		this.z = z;
+		this.w = w;
+	}
+};
+
+/**
+ * X-axis value.
+ * 
+ * @type {number}
+ */
+VVGL.Vec4.prototype.x = 0.0;
+
+/**
+ * Y-axis value.
+ * 
+ * @type {number}
+ */
+VVGL.Vec4.prototype.y = 0.0;
+
+/**
+ * Z-axis value.
+ * 
+ * @type {number}
+ */
+VVGL.Vec4.prototype.z = 0.0;
+
+/**
+ * W-axis value.
+ * 
+ * @type {number}
+ */
+VVGL.Vec4.prototype.w = 0.0;
+
+
+/**
+ * Add another vector to this one.
+ * 
+ * @param {VVGL.Vec4} vector
+ */
+VVGL.Vec4.prototype.add = function (vector) {
+	this.x += vector.x;
+	this.y += vector.y;
+	this.z += vector.z;
+	this.w += vector.w;
+};
+
+/**
+ * Substract another vector to this one.
+ * 
+ * @param {VVGL.Vec4} vector
+ */
+VVGL.Vec4.prototype.sub = function (vector) {
+	this.x -= vector.x;
+	this.y -= vector.y;
+	this.z -= vector.z;
+	this.w -= vector.w;
+};
+
+/**
+ * Scale vector by a number.
+ * 
+ * @param {number} n
+ */
+VVGL.Vec4.prototype.scale = function (n) {
+	this.x *= n;
+	this.y *= n;
+	this.z *= n;
+	this.w *= w;
+};
+
+/**
+ * Copy vector data to another.
+ * 
+ * @param {VVGL.Vec4} vector
+ */
+VVGL.Vec4.prototype.copyTo = function (vector) {
+	vector.x = this.x;
+	vector.y = this.y;
+	vector.z = this.z;
+	vector.w = this.w;
+};
+
+/**
+ * Calc and return vector's norm.
+ * 
+ * @return {number} Vector's norm.
+ */
+VVGL.Vec4.prototype.getNorm = function () {
+	return (Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w));
+};
+
+/**
+ * Normalize vector, making its norm to 1.
+ */
+VVGL.Vec4.prototype.normalize = function () {
+	var norm = this.getNorm();
+	this.scale(1 / norm);
+};
+
+/**
+ * Create copy of this vector.
+ * 
+ * @return {VVGL.Vec4} Copy.
+ */
+VVGL.Vec4.prototype.clone = function () {
+	return (new VVGL.Vec4(this.x, this.y, this.z, this.w));
+};
+
+/**
+ * Convert vector to a data array.
+ * 
+ * @return {Array} A float array containing the three vector's values.
+ */
+VVGL.Vec4.prototype.toArray = function () {
+	return ([this.x, this.y, this.z, this.w]);
+};
+
+/**
  * OpenGL buffer to store mesh data.
  * Can be a vertice feature (position, color, textureCoord or normal) or Element indices.
  * 
@@ -1736,8 +2842,7 @@ VVGL.ArrayBuffer.prototype.getItemSize = function () {
 VVGL.ArrayBuffer.prototype.bind = function () {
 	gl.bindBuffer(this.type, this.buffer);
 	if (this.attribute !== null) {
-		var program = VVGL.ShaderProgram.currentProgram;
-		program.setAttribute(this.attribute, this);
+		VVGL.ShaderProgram.currentProgram.setAttribute(this.attribute, this);
 	}
 };
 
@@ -1746,17 +2851,26 @@ VVGL.ArrayBuffer.prototype.bind = function () {
  */
 VVGL.ArrayBuffer.prototype.unbind = function () {
 	gl.bindBuffer(this.type, null);
+	if (this.attribute !== null) {
+		VVGL.ShaderProgram.currentProgram.unsetAttribute(this.attribute);
+	}
 };
 /**
- * Represent a model.
- * 
  * @class
- * @implements {VVGL.SceneData}
+ * @classdesc Represent a model.
+ * @extends VVGL.SceneData
+ * @param {VVGL.RenderMode} [VVGL.RenderMode.TRIANGLES] renderMode
  */
 VVGL.Mesh = function (renderMode) {
+	VVGL.SceneData.call(this, "mesh");
 	renderMode = VVGL.setIfUndefined(renderMode, VVGL.RenderMode.TRIANGLES);
 	
 	this.verticesBuffers = [];
+	this.useColor = false;
+	this.useTextureCoord = false;
+	this.useNormal = false;
+	this.texture = null;
+	this.shader = null;
 	this.indices = null;
 	
 	this.renderMode = renderMode;
@@ -1805,6 +2919,18 @@ VVGL.Mesh.prototype.bindArrays = function () {
 	if (this.indices) {
 		this.indices.bind();
 	}
+	
+	var shader = VVGL.ShaderProgram.currentProgram;
+	shader.setBoolUniform("uUseColor", this.useColor);
+	shader.setBoolUniform("uUseTexture", this.useTextureCoord);
+	shader.setBoolUniform("uUseNormal", this.useNormal);
+	
+	if (this.useTextureCoord) {
+		if (this.texture === null) {
+			throw new VVGL.Exception("Trying to render a textured mesh without texture.");
+		}
+		this.texture.activate();
+	}
 };
 
 /**
@@ -1826,7 +2952,7 @@ VVGL.Mesh.prototype.unbindArrays = function () {
  */
 VVGL.Mesh.prototype.addPositions = function (positions) {
 	var buffer = this.createFloatData(positions, 3);
-	buffer.linkToAttribute("aVertexPosition");
+	buffer.linkToAttribute("aPosition");
 	if (this.indices === null) {
 		this.itemsNumber = positions.length / 3;
 	}
@@ -1835,14 +2961,41 @@ VVGL.Mesh.prototype.addPositions = function (positions) {
 };
 
 /**
- * Create positions array buffer from positions data.
+ * Create colors array buffer from colors data.
  * 
- * @param {Array} positions Float array.
+ * @param {Array} colors Float array.
  */
 VVGL.Mesh.prototype.addColors = function (colors) {
 	buffer = this.createFloatData(colors, 4);
-	buffer.linkToAttribute("aVertexColor");
+	buffer.linkToAttribute("aColor");
 	
+	this.useColor = true;
+	this.verticesBuffers.push(buffer);
+};
+
+/**
+ * Create texture coords array buffer from texture coords data.
+ * 
+ * @param {Array} positions Float array.
+ */
+VVGL.Mesh.prototype.addTextureCoords = function (textureCoords) {
+	buffer = this.createFloatData(textureCoords, 2);
+	buffer.linkToAttribute("aTextureCoord");
+	
+	this.useTextureCoord = true;
+	this.verticesBuffers.push(buffer);
+};
+
+/**
+ * Create texture coords array buffer from texture coords data.
+ * 
+ * @param {Array} positions Float array.
+ */
+VVGL.Mesh.prototype.addNormals = function (normals) {
+	buffer = this.createFloatData(normals, 3);
+	buffer.linkToAttribute("aNormal");
+	
+	this.useNormal = true;
 	this.verticesBuffers.push(buffer);
 };
 
@@ -1857,18 +3010,50 @@ VVGL.Mesh.prototype.addIndices = function (indices) {
 };
 
 /**
+ * Set mesh texture. Necessary if textureCoords are used.
+ * 
+ * @param {VVGL.Texture} texture
+ */
+VVGL.Mesh.prototype.setTexture = function (texture) {
+	this.texture = texture;
+};
+
+/**
+ * Set shader program.
+ * 
+ * @param {VVGL.ShaderProgram} texture
+ */
+VVGL.Mesh.prototype.setShader = function (shader) {
+	this.shader = shader;
+};
+
+/**
+ * Return mesh shader.
+ * Throw an exception if no shader is linked.
+ * 
+ * @return {VVGL.ShaderProgram}
+ */
+VVGL.Mesh.prototype.getShader = function () {
+	if (this.shader === null) {
+		throw new VVGL.Exception("Missing shader for a mesh.");
+	}
+	return (this.shader);
+};
+
+/**
  * Render mesh to scene, drawing parts.
  * 
  * @override
- * @param {VVGL.Renderer} renderer
  */
-VVGL.Mesh.prototype.render = function (renderer) {
+VVGL.Mesh.prototype.render = function () {
 	this.bindArrays();
 	{
 		if (this.indices === null) {
+			VVGL.GLErrorException.checkError("drawArrays before");
 			gl.drawArrays(this.renderMode, 0, this.itemsNumber);
 			VVGL.GLErrorException.checkError("drawArrays");
 		} else {
+			VVGL.GLErrorException.checkError("drawElements before");
 			gl.drawElements(this.renderMode, this.itemsNumber, gl.UNSIGNED_SHORT, 0);
 			VVGL.GLErrorException.checkError("drawElements");
 		}
@@ -1885,21 +3070,169 @@ VVGL.Mesh.prototype.render = function (renderer) {
  */
 VVGL.Mesh.prototype.update = function (elapsedTime) {};
 /**
+ * @class
+ * @extends VVGL.Mesh
+ * @classdesc Mesh representing axis in 3 Dimentions.
+ * @param {number} length Lines length.
+ */
+VVGL.Axis = function (length) {
+	VVGL.Mesh.call(this, VVGL.RenderMode.LINES);
+	
+	this.addPositions([
+		0.0, 0.0, 0.0,
+		length, 0.0, 0.0,
+		0.0, 0.0, 0.0,
+		0.0, length, 0.0,
+		0.0, 0.0, 0.0,
+		0.0, 0.0, length
+	]);
+	this.addColors([
+		1.0, 0.0, 0.0, 1.0,
+		1.0, 0.0, 0.0, 1.0,
+		0.0, 1.0, 0.0, 1.0,
+		0.0, 1.0, 0.0, 1.0,
+		0.0, 0.0, 1.0, 1.0,
+		0.0, 0.0, 1.0, 1.0
+	]);
+};
+
+VVGL.Axis.prototype = Object.create(VVGL.Mesh.prototype);
+/**
+ * Represent a frame rendering.
+ * Used by {@link VVGL.Renderer} to create a scene frame.
+ */
+VVGL.FrameRender = function () {
+	this.datas = [];
+	this.reset();
+};
+
+/**
+ * Reset frame render for new frame.
+ */
+VVGL.FrameRender.prototype.reset = function () {
+	this.datas["camera"]	= [];
+	this.datas["light"]		= [];
+	this.datas["mesh"]		= [];
+};
+
+/**
+ * Add lights datas to shader program.
+ * 
+ * @private
+ * @param {VVGL.ShaderProgram} shader
+ */
+VVGL.FrameRender.prototype.addLights = function (shader) {
+	for (var i in this.datas["light"]) {
+		var light = this.datas["light"][i];
+		
+		light.sendToShader(shader);
+	}
+};
+
+/**
+ * Get mesh list linked to shader.
+ * Create list and add it to meshes list if it doesn't exist.
+ * 
+ * @private
+ * @param {VVGL.ShaderProgram} shader
+ * @return {Object} Meshes list.
+ */
+VVGL.FrameRender.prototype.findShaderMeshList = function (shader) {
+	for (var i in this.datas["mesh"]) {
+		var meshes = this.datas["mesh"][i];
+		if (meshes.shader === shader) {
+			return (meshes);
+		}
+	}
+	
+	var meshes = {
+		shader: shader,
+		list: []
+	};
+	this.datas["mesh"].push(meshes);
+	return (meshes);
+};
+
+/**
+ * Add an {@link VVGL.SceneData} to render list.
+ * 
+ * @param {VVGL.SceneData} data
+ * @param {VVGL.Mat4} matrix Model matrix
+ */
+VVGL.FrameRender.prototype.addData = function (data, matrix) {
+	if (data.getType() == "mesh") {
+		var datas = this.findShaderMeshList(data.getShader());
+		
+		datas.list.push({
+			matrix: matrix,
+			data: data
+		});
+	} else {
+		this.datas[data.getType()].push(data);
+	}
+};
+
+/**
+ * Configure perspective and view matrices from active camera.
+ * 
+ * @private
+ * @param {VVGL.Camera} camera
+ * @return {VVGL.Mat4} View matrix
+ */
+VVGL.FrameRender.prototype.configureFromCamera = function (activeCamera) {
+	var program = VVGL.ShaderProgram.currentProgram;
+	program.setMatrix4Uniform("uPerspectiveMatrix", activeCamera.getPerspective());
+	program.setMatrix4Uniform("uViewMatrix", activeCamera.getView());
+	
+	return (activeCamera.getView());
+};
+
+/**
+ * Render everything.
+ * 
+ * @param {VVGL.Camera} camera Active camera
+ */
+VVGL.FrameRender.prototype.render = function (camera) {
+	var viewMatrix = this.configureFromCamera(camera);
+	var modelViewMatrix = new VVGL.Mat4();
+	var normalMatrix = new VVGL.Mat3();
+	
+	for (var i in this.datas["mesh"]) {
+		var meshes = this.datas["mesh"][i];
+		var program = meshes.shader;
+		var list = meshes.list;
+		program.bind();
+		
+		this.addLights(program);
+		
+		for (var i in list) {
+			var mesh = list[i];
+			
+			normalMatrix.normalFromMat4(mesh.matrix);
+			normalMatrix.transpose();
+			
+			program.setMatrix4Uniform("uModelMatrix", mesh.matrix);
+			program.setMatrix3Uniform("uNormalMatrix", normalMatrix);
+			mesh.data.render();
+		}
+	}
+};
+/**
  * Webgl Renderer.
  * Graphics control panel.
  * Accessible directly from {@link VVGL.Application}.
- * 
+ *
  * @class
+ * @classdesc Webgl Renderer.
  */
 VVGL.Renderer = function () {
-	gl.enable(gl.DEPTH_TEST);
+	this.enableDepth();
+	this.enableBackfaceCulling();
+	gl.enable(gl.CULL_FACE);
 	this.backgroundColor = new VVGL.Color();
 	this.setBackgroundColor(VVGL.Color.black);
-	/*
-	this.perspective = new VVGL.PerspectiveMatrix();
-	this.view = new VVGL.ViewMatrix();
-	this.model = new VVGL.ModelMatrix();
-	*/
+	
+	this.frameRender = new VVGL.FrameRender();
 };
 
 /**
@@ -1918,7 +3251,12 @@ VVGL.Renderer.prototype.setBackgroundColor = function (color) {
  * @private
  */
 VVGL.Renderer.prototype.prepareFrame = function () {
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	var clearMask = gl.COLOR_BUFFER_BIT;
+	
+	if (this.depthTest) {
+		clearMask |= gl.DEPTH_BUFFER_BIT;
+	}
+	gl.clear(clearMask);
 };
 
 /**
@@ -1928,19 +3266,445 @@ VVGL.Renderer.prototype.prepareFrame = function () {
  * @private
  */
 VVGL.Renderer.prototype.drawScene = function (scene) {
-	var program = VVGL.ShaderProgram.currentProgram;
-	var camera = scene.getActiveCamera();
+	this.frameRender.reset();
 	
+	var camera = scene.getActiveCamera();
 	if (camera === null) {
 		throw new VVGL.Exception("No active camera for scene rendering.");
 	}
 	
-	program.setMatrix4Uniform("uPerspectiveMatrix", camera.getPerspective());
-	program.setMatrix4Uniform("uViewMatrix", camera.getView());
-	
-	program.setMatrix4Uniform("uModelMatrix", new VVGL.Mat4());
-	
 	scene.getRoot().render(this);
+	
+	this.frameRender.render(camera);
+};
+
+/**
+ * Add renderable object to render list for next frame.
+ * 
+ * @param {VVGL.IRenderable} data Renderable node data.
+ * @param {VVGL.Mat4} matrix Element's model matrix.
+ */
+VVGL.Renderer.prototype.addToRenderList = function (data, matrix) {
+	this.frameRender.addData(data, matrix);
+};
+
+/**
+ * Active depth mode.
+ * Enabled by default.
+ */
+VVGL.Renderer.prototype.enableDepth = function () {
+	this.depthTest = true;
+	gl.enable(gl.DEPTH_TEST);
+};
+
+/**
+ * Check if depth mode is enabled.
+ * 
+ * @return {boolean}
+ */
+VVGL.Renderer.prototype.isDepthEnabled = function () {
+	return (this.depthTest);
+};
+
+/**
+ * Disable depth mode.
+ */
+VVGL.Renderer.prototype.disableDepth = function () {
+	this.depthTest = false;
+	gl.disable(gl.DEPTH_TEST);
+};
+
+/**
+ * Check if depth test is enabled.
+ * 
+ * @return {boolean}
+ */
+VVGL.Renderer.prototype.isDepthEnabled = function () {
+	return (this.depthTest);
+};
+
+/**
+ * Active backface culling.
+ * Enabled by default.
+ */
+VVGL.Renderer.prototype.enableBackfaceCulling = function () {
+	this.backfaceCulling = true;
+	gl.enable(gl.CULL_FACE);
+};
+
+/**
+ * Disable backface culling.
+ */
+VVGL.Renderer.prototype.disableBackfaceCulling = function () {
+	this.depthTest = false;
+	gl.disable(gl.CULL_FACE);
+};
+/**
+ * World scene.
+ * 
+ * @class
+ */
+VVGL.Scene = function () {
+	this.root = new VVGL.SceneNode(null, null);
+	this.activeCamera = null;
+};
+
+
+/**
+ * Set active camera for view and perspective matrices.
+ * 
+ * @param {VVGL.Camera} camera
+ */
+VVGL.Scene.prototype.setActiveCamera = function (camera) {
+	this.activeCamera = camera;
+};
+
+/**
+ * Return active camera.
+ * Return null if none camera is setted.
+ * 
+ * @return {VVGL.Camera}
+ */
+VVGL.Scene.prototype.getActiveCamera = function () {
+	return (this.activeCamera);
+};
+
+/**
+ * Return root scene node.
+ * 
+ * @return {VVGL.SceneNode} Scene root node.
+ */
+VVGL.Scene.prototype.getRoot = function () {
+	return (this.root);
+};
+/**
+ * Manager of scenes selection.
+ * 
+ * @class Manager of scenes selection.
+ * @constructor
+ * @private
+ */
+VVGL.SceneManager = function () {
+	this.scenes = new VVGL.Map();
+	this.currentScene = null;
+};
+
+/**
+ * Add a new scene to list.
+ * 
+ * @param {string} scene Scene name.
+ * @param {VVGL.Scene} scene New scene to add to list.
+ * @param {Boolean} select The new scene is now the current one if this param is true. Set to false if undefined.
+ */
+VVGL.SceneManager.prototype.addScene = function(name, scene, select) {
+	select = VVGL.setIfUndefined(select, false);
+	
+	this.scenes.add(name, scene);
+	if (select) {
+		this.currentScene = scene;
+	}
+};
+
+/**
+ * Return last selectioned scene, or null if no scene is selectioned.
+ * 
+ * @return {VVGL.Scene} Last selectioned scene, or null if no scene is selectioned.
+ */
+VVGL.SceneManager.prototype.getCurrentScene = function () {
+	return (this.currentScene);
+};
+/**
+ * @class
+ * @classdesc Transformable element (base for {@link VVGL.SceneNode})
+ */
+VVGL.Transformable = function () {
+	this.position = VVGL.Transformable.prototype.position.clone();
+	this.rotation = VVGL.Transformable.prototype.rotation.clone();
+	this.scaleVector = VVGL.Transformable.prototype.scaleVector.clone();
+	this.matrix = new VVGL.Mat4();
+	this.upToDate = true;
+};
+
+/**
+ * Element position
+ * 
+ * @type {VVGL.Vec3}
+ * @default
+ */
+VVGL.Transformable.prototype.position = new VVGL.Vec3(0, 0, 0);
+
+/**
+ * Element rotation angles in radians.
+ * 
+ * @type {VVGL.Vec3}
+ * @default
+ */
+VVGL.Transformable.prototype.rotation = new VVGL.Vec3(0, 0, 0);
+
+/**
+ * Element scale ratios.
+ * 
+ * @type {VVGL.Vec3}
+ * @default
+ */
+VVGL.Transformable.prototype.scaleVector = new VVGL.Vec3(1, 1, 1);
+
+/**
+ * Translate element.
+ * 
+ * @param {number} x
+ * @param {number} y
+ * @param {number} z
+ */
+VVGL.Transformable.prototype.translate = function (x, y, z) {
+	this.upToDate = false;
+	this.position.x += x;
+	this.position.y += y;
+	this.position.z += z;
+};
+
+/**
+ * Translate element by vector.
+ * 
+ * @param {VVGL.Vec3} vector
+ */
+VVGL.Transformable.prototype.translateByVector = function (vector) {
+	this.upToDate = false;
+	this.position.add(vector);
+};
+
+/**
+ * Rotate element on X axis.
+ * 
+ * @param {number} angle Angle in radians.
+ */
+VVGL.Transformable.prototype.rotateX = function (angle) {
+	this.upToDate = false;
+	this.rotation.x += angle;
+};
+
+/**
+ * Rotate element on Y axis.
+ * 
+ * @param {number} angle Angle in radians.
+ */
+VVGL.Transformable.prototype.rotateY = function (angle) {
+	this.upToDate = false;
+	this.rotation.y += angle;
+};
+
+/**
+ * Rotate element on Z axis.
+ * 
+ * @param {number} angle Angle in radians.
+ */
+VVGL.Transformable.prototype.rotateZ = function (angle) {
+	this.upToDate = false;
+	this.rotation.z += angle;
+};
+
+/**
+ * Scale element size by number.
+ * 
+ * @param {number} n
+ */
+VVGL.Transformable.prototype.scale = function (n) {
+	this.upToDate = false;
+	this.scaleVector.scale(n);
+};
+
+/**
+ * Scale element size by vector.
+ * 
+ * @param {VVGL.Vec3} vector
+ */
+VVGL.Transformable.prototype.scaleByVector = function (vector) {
+	this.upToDate = false;
+	this.scaleVector.x *= vector.x;
+	this.scaleVector.y *= vector.y;
+	this.scaleVector.z *= vector.z;
+};
+
+/**
+ * Calc model matrix from vectors.
+ * 
+ * @private
+ */
+VVGL.Transformable.prototype.calcMatrix = function (matrixMother) {
+	if (matrixMother) {
+		matrixMother.copyTo(this.matrix);
+	} else {
+		this.matrix.identity();
+	}
+	
+	this.matrix.translate(this.position);
+	this.matrix.scale(this.scaleVector);
+	this.matrix.rotateX(this.rotation.x);
+	this.matrix.rotateY(this.rotation.y);
+	this.matrix.rotateZ(this.rotation.z);
+};
+
+/**
+ * Return model matrix from vectors values.
+ * 
+ * @return {VVGL.Mat4} Model matrix.
+ */
+VVGL.Transformable.prototype.getMatrix = function () {
+	return (this.matrix);
+};
+/**
+ * The mother class for all node scene classes, including the scene root.
+ * 
+ * @class
+ * @classdesc The mother class for all node scene classes.
+ * @extends VVGL.Transformable
+ * @param {VVGL.SceneData} data Renderable data.
+ * @param {VVGL.SceneNode} parent Node parent.
+ */
+VVGL.SceneNode = function (data, parent) {
+	VVGL.Transformable.call(this);
+	data = VVGL.setIfUndefined(data, null);
+	parent = VVGL.setIfUndefined(parent, null);
+	this.data = data;
+	this.parent = parent;
+	this.children = [];
+};
+
+VVGL.SceneNode.prototype = Object.create(VVGL.Transformable.prototype);
+
+/**
+ * Node data. Must be renderable (implementing a render function).
+ * 
+ * @type {Object}
+ */
+VVGL.SceneNode.prototype.data = null;
+
+/**
+ * Scene node parent to this one.
+ * Is null for and only for the root node.
+ * 
+ * @type {VVGL.SceneNode}
+ */
+VVGL.SceneNode.prototype.parent = null;
+
+/**
+ * Update node model matrix and its children model matrices.
+ * 
+ * @private
+ */
+VVGL.SceneNode.prototype.updateMatrix = function () {
+	var matrixMother = null;
+	if (this.parent !== null) {
+		matrixMother = this.parent.matrix;
+	}
+	this.calcMatrix(matrixMother);
+	
+	for (var i in this.children) {
+		this.children[i].updateMatrix();
+	}
+};
+
+/**
+ * Render node and these children to display.
+ * 
+ * @param {VVGL.Renderer} renderer
+ */
+VVGL.SceneNode.prototype.render = function (renderer) {
+	if (this.data !== null) {
+		renderer.addToRenderList(this.data, this.matrix);
+	}
+	
+	for (var i in this.children) {
+		this.children[i].render(renderer);
+	}
+};
+
+/**
+ * Update node data and these children's datas.
+ * 
+ * @param {number} elapsedTime Elapsed miliseconds from last frame.
+ */
+VVGL.SceneNode.prototype.update = function (elapsedTime) {
+	if (!this.upToDate) {
+		this.updateMatrix();
+	}
+	
+	if (this.data !== null) {
+		this.data.update(elapsedTime);
+	}
+	
+	for (var i in this.children) {
+		this.children[i].update(elapsedTime);
+	}
+};
+
+/**
+ * Add a new child to this node.
+ * 
+ * @param {VVGL.SceneNode} node New child node. 
+ */
+VVGL.SceneNode.prototype.addChild = function (node) {
+	this.children.push(node);
+	node.parent = this;
+};
+
+/**
+ * Remove child from this node
+ *
+ * @param {VVGL.SceneNode} node Node to remove
+ */
+VVGL.SceneNode.prototype.removeChild = function (node) {
+    var index = this.children.indexOf(node);
+    if (index === -1) {
+        throw new VVGL.Exception("Trying to remove unexisting child from node.");
+    }
+    this.children.slice(index, 1);
+};
+
+/**
+ * Return node parent.
+ * 
+ * @return {VVGL.SceneNode} Parent node.
+ */
+VVGL.SceneNode.prototype.getParent = function () {
+	return (this.parent);
+};
+
+/**
+ * Return node children.
+ * 
+ * @return {Array} Children.
+ */
+VVGL.SceneNode.prototype.getChildren = function () {
+	return (this.children);
+};
+/**
+ * @class
+ * @classdesc Represent a shader attribute.
+ * @param {VVGL.ShaderProgram} shader
+ * @param {string} name
+ */
+VVGL.Attribute = function (shader, name) {
+	this.shader = shader;
+	this.name = name;
+	this.location = gl.getAttribLocation(shader.program, name);
+	if (this.location === -1) {
+		throw new VVGL.GLRessourceException(this.shader, "Cannot reach location of attribute " + name);
+	}
+};
+
+/**
+ * Enable attribute.
+ */
+VVGL.Attribute.prototype.enable = function () {
+	gl.enableVertexAttribArray(this.location);
+};
+
+/**
+ * Disable attribute.
+ */
+VVGL.Attribute.prototype.disable = function () {
+	gl.disableVertexAttribArray(this.location);
 };
 /**
  * Compiled vertex or fragment shader.
@@ -2053,11 +3817,10 @@ VVGL.ShaderProgram = function (vertexShader, fragmentShader) {
 	}
 	
 	this.bind();
-	this.addAttribute("aVertexPosition");
-	this.addAttribute("aVertexColor");
-	this.addUniform("uModelMatrix");
-	this.addUniform("uPerspectiveMatrix");
-	this.addUniform("uViewMatrix");
+	this.addAttribute("aPosition");
+	this.addAttribute("aColor");
+	this.addAttribute("aTextureCoord");
+	this.addAttribute("aNormal");
 };
 
 /**
@@ -2081,9 +3844,7 @@ VVGL.ShaderProgram.prototype.fragmentShader = null;
  * @param {string} name Attribute name.
  */
 VVGL.ShaderProgram.prototype.addAttribute = function (name) {
-	var location = gl.getAttribLocation(this.program, name);
-	this.attributes[name] = location;
-	gl.enableVertexAttribArray(location);
+	this.attributes[name] = new VVGL.Attribute(this, name);
 };
 
 /**
@@ -2092,7 +3853,11 @@ VVGL.ShaderProgram.prototype.addAttribute = function (name) {
  * @param {string} name Uniform name.
  */
 VVGL.ShaderProgram.prototype.addUniform = function (name) {
-	this.uniforms[name] = gl.getUniformLocation(this.program, name);
+	var location = gl.getUniformLocation(this.program, name);
+	if (location === -1) {
+		throw new VVGL.GLRessourceException(this, "Cannot reach location of uniform " + name);
+	}
+	this.uniforms[name] = location;
 };
 
 /**
@@ -2118,13 +3883,29 @@ VVGL.ShaderProgram.prototype.unbind = function () {
  * @param {VVGL.ArrayBuffer} buffer
  */
 VVGL.ShaderProgram.prototype.setAttribute = function (name, buffer) {
-	var location = this.attributes[name];
+	var attribute = this.attributes[name];
 	
-	if (location === undefined) {
+	if (!attribute) {
 		throw new VVGL.Exception("Trying to get undefined attribute: " + name);
 	}
 	
-	gl.vertexAttribPointer(location, buffer.getItemSize(), gl.FLOAT, false, 0, 0);
+	attribute.enable();
+	gl.vertexAttribPointer(attribute.location, buffer.getItemSize(), gl.FLOAT, false, 0, 0);
+};
+
+/**
+ * Unset attribute buffer.
+ * 
+ * @param {string} name
+ */
+VVGL.ShaderProgram.prototype.unsetAttribute = function (name) {
+	var attribute = this.attributes[name];
+	
+	if (!attribute) {
+		throw new VVGL.Exception("Trying to get undefined attribute: " + name);
+	}
+	
+	attribute.disable();
 };
 
 /**
@@ -2136,11 +3917,78 @@ VVGL.ShaderProgram.prototype.setAttribute = function (name, buffer) {
 VVGL.ShaderProgram.prototype.getUniform = function (name) {
 	var uniform = this.uniforms[name];
 	
-	if (uniform === undefined) {
-		throw new VVGL.Exception("Trying to get undefined uniform: " + name);
+	if (!uniform) {
+		this.addUniform(name);
 	}
 	
 	return (uniform);
+};
+
+/**
+ * Set Int or Bool uniform.
+ * 
+ * @param {string} name Uniform variable name.
+ * @param {number} value Uniform variable value.
+ */
+VVGL.ShaderProgram.prototype.setIntUniform = function (name, value) {
+	gl.uniform1i(this.getUniform(name), value);
+};
+
+/**
+ * @see {@link VVGL.ShaderProgram.prototype.setIntUniform}
+ */
+VVGL.ShaderProgram.prototype.setBoolUniform = VVGL.ShaderProgram.prototype.setIntUniform;
+
+/**
+ * Set Float uniform.
+ * 
+ * @param {string} name Uniform variable name.
+ * @param {number} value Uniform variable value.
+ */
+VVGL.ShaderProgram.prototype.setFloatUniform = function (name, value) {
+	gl.uniform1f(this.getUniform(name), value);
+};
+
+/**
+ * Set Vec3 uniform.
+ * 
+ * @param {string} name Uniform variable name.
+ * @param {VVGL.Vec3} vector Uniform variable value.
+ */
+VVGL.ShaderProgram.prototype.setVector3Uniform = function (name, vector) {
+	gl.uniform3f(this.getUniform(name), vector.x, vector.y, vector.z);
+};
+
+/**
+ * Set Vec4 uniform.
+ * 
+ * @param {string} name Uniform variable name.
+ * @param {VVGL.Vec4} vector Uniform variable value.
+ */
+VVGL.ShaderProgram.prototype.setVector4Uniform = function (name, vector) {
+	gl.uniform4f(this.getUniform(name), vector.x, vector.y, vector.z, vector.w);
+};
+
+
+/**
+ * Set color uniform.
+ * 
+ * @param {string} name Uniform variable name.
+ * @param {VVGL.Color} color Uniform variable value.
+ */
+VVGL.ShaderProgram.prototype.setColorUniform = function (name, color) {
+	gl.uniform3f(this.getUniform(name), color.r, color.g, color.b);
+};
+
+/**
+ * Set Mat3 uniform.
+ * 
+ * @param {string} name Uniform variable name.
+ * @param {VVGL.Mat3} matrix Uniform variable value.
+ */
+VVGL.ShaderProgram.prototype.setMatrix3Uniform = function (name, matrix) {
+	var uniform = this.getUniform(name);
+	gl.uniformMatrix3fv(uniform, false, matrix.toArray());
 };
 
 /**
@@ -2208,166 +4056,77 @@ VVGL.ShaderProgram.createFromStrings = function (vertexString, fragmentString) {
 	return (new VVGL.ShaderProgram(vertexShader, fragmentShader));
 };
 /**
- * World scene.
+ * Create new texture from image file.
  * 
  * @class
+ * @classdesc Bindable texture.
+ * @implements {VVGL.IBindable}
+ * @param {string} source Image file path.
+ * @todo Add texture manager.
  */
-VVGL.Scene = function () {
-	this.root = new VVGL.SceneNode(null, null);
-	this.activeCamera = null;
+VVGL.Texture = function (source) {
+	var me = this;
+	
+	this.texture = gl.createTexture();
+	this.image = new Image();
+	this.image.onload = function () {me.onLoad();};
+	this.image.onerror = function () {me.onError();};
+	this.image.src = source;
+};
+
+VVGL.Texture.prototype = Object.create(VVGL.IBindable.prototype);
+
+/**
+ * Define this texture as used.
+ */
+VVGL.Texture.prototype.bind = function () {
+	gl.bindTexture(gl.TEXTURE_2D, this.texture);
+};
+
+/**
+ * Define no texture as used.
+ */
+VVGL.Texture.prototype.unbind = function () {
+	gl.bindTexture(gl.TEXTURE_2D, null);
+};
+
+/**
+ * Use this texture in shader.
+ * 
+ * @todo Use multiple textures.
+ */
+VVGL.Texture.prototype.activate = function () {
+	var shader = VVGL.ShaderProgram.currentProgram;
+	
+    gl.activeTexture(gl.TEXTURE0);
+    this.bind();
+    shader.setIntUniform("uTexture", 0);
 };
 
 
 /**
- * Set active camera for view and perspective matrices.
+ * Called if image loading failed.
  * 
- * @param {VVGL.Camera} camera
- */
-VVGL.Scene.prototype.setActiveCamera = function (camera) {
-	this.activeCamera = camera;
-};
-
-/**
- * Return active camera.
- * Return null if none camera is setted.
- * 
- * @return {VVGL.Camera}
- */
-VVGL.Scene.prototype.getActiveCamera = function () {
-	return (this.activeCamera);
-};
-
-/**
- * Return root scene node.
- * 
- * @return {VVGL.SceneNode} Scene root node.
- */
-VVGL.Scene.prototype.getRoot = function () {
-	return (this.root);
-};
-/**
- * Manager of scenes selection.
- * 
- * @class Manager of scenes selection.
- * @constructor
  * @private
  */
-VVGL.SceneManager = function () {
-	this.scenes = new VVGL.Map();
-	this.currentScene = null;
+VVGL.Texture.prototype.onError = function () {
+	alert("Failed to load texture " + this.image.src);
 };
 
 /**
- * Add a new scene to list.
+ * Called once image finished to load.
  * 
- * @param {string} scene Scene name.
- * @param {VVGL.Scene} scene New scene to add to list.
- * @param {Boolean} select The new scene is now the current one if this param is true. Set to false if undefined.
+ * @private
  */
-VVGL.SceneManager.prototype.addScene = function(name, scene, select) {
-	select = VVGL.setIfUndefined(select, false);
-	
-	this.scenes.add(name, scene);
-	if (select) {
-		this.currentScene = scene;
+VVGL.Texture.prototype.onLoad = function () {
+	this.bind();
+	{
+	    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+	    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.image);
+	    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+	    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 	}
-};
-
-/**
- * Return last selectioned scene, or null if no scene is selectioned.
- * 
- * @return {VVGL.Scene} Last selectioned scene, or null if no scene is selectioned.
- */
-VVGL.SceneManager.prototype.getCurrentScene = function () {
-	return (this.currentScene);
-};
-/**
- * The mother class for all node scene classes, including the scene root.
- * 
- * @class The mother class for all node scene classes.
- * @constructor
- * @param {VVGL.SceneData} data Renderable data.
- * @param {VVGL.SceneNode} parent Node parent.
- */
-VVGL.SceneNode = function (data, parent) {
-	data = VVGL.setIfUndefined(data, null);
-	parent = VVGL.setIfUndefined(parent, null);
-	this.data = data;
-	this.parent = parent;
-	this.children = [];
-};
-
-/**
- * Node data. Must be renderable (implementing a render function).
- * 
- * @type {Object}
- */
-VVGL.SceneNode.prototype.data = null;
-
-/**
- * Scene node parent to this one.
- * Is null for and only for the root node.
- * 
- * @type {VVGL.SceneNode}
- */
-VVGL.SceneNode.prototype.parent = null;
-
-/**
- * Render node and these children to display.
- * 
- * @param {VVGL.Renderer} renderer
- */
-VVGL.SceneNode.prototype.render = function (renderer) {
-	if (this.data !== null) {
-		this.data.render(renderer);
-	}
-	
-	for (var i in this.children) {
-		this.children[i].render(renderer);
-	}
-};
-
-/**
- * Update node data and these children's datas.
- * 
- * @param {number} elapsedTime Elapsed miliseconds from last frame.
- */
-VVGL.SceneNode.prototype.update = function (elapsedTime) {
-	if (this.data !== null) {
-		this.data.update(elapsedTime);
-	}
-	
-	for (var i in this.children) {
-		this.children[i].update(elapsedTime);
-	}
-};
-
-/**
- * Add a new child to this node.
- * 
- * @param {VVGL.SceneNode} node New child node. 
- */
-VVGL.SceneNode.prototype.addChild = function (node) {
-	this.children.push(node);
-	node.parent = this;
-};
-
-/**
- * Return node parent.
- * 
- * @return {VVGL.SceneNode} Parent node.
- */
-VVGL.SceneNode.prototype.getParent = function () {
-	return (this.parent);
-};
-
-/**
- * Return node children.
- * 
- * @return {Array} Children.
- */
-VVGL.SceneNode.prototype.getChildren = function () {
-	return (this.children);
+    this.unbind();
 };
 /**
  * @class

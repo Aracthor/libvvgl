@@ -21,11 +21,10 @@ VVGL.ShaderProgram = function (vertexShader, fragmentShader) {
 	}
 	
 	this.bind();
-	this.addAttribute("aVertexPosition");
-	this.addAttribute("aVertexColor");
-	this.addUniform("uModelMatrix");
-	this.addUniform("uPerspectiveMatrix");
-	this.addUniform("uViewMatrix");
+	this.addAttribute("aPosition");
+	this.addAttribute("aColor");
+	this.addAttribute("aTextureCoord");
+	this.addAttribute("aNormal");
 };
 
 /**
@@ -49,9 +48,7 @@ VVGL.ShaderProgram.prototype.fragmentShader = null;
  * @param {string} name Attribute name.
  */
 VVGL.ShaderProgram.prototype.addAttribute = function (name) {
-	var location = gl.getAttribLocation(this.program, name);
-	this.attributes[name] = location;
-	gl.enableVertexAttribArray(location);
+	this.attributes[name] = new VVGL.Attribute(this, name);
 };
 
 /**
@@ -60,7 +57,11 @@ VVGL.ShaderProgram.prototype.addAttribute = function (name) {
  * @param {string} name Uniform name.
  */
 VVGL.ShaderProgram.prototype.addUniform = function (name) {
-	this.uniforms[name] = gl.getUniformLocation(this.program, name);
+	var location = gl.getUniformLocation(this.program, name);
+	if (location === -1) {
+		throw new VVGL.GLRessourceException(this, "Cannot reach location of uniform " + name);
+	}
+	this.uniforms[name] = location;
 };
 
 /**
@@ -86,13 +87,29 @@ VVGL.ShaderProgram.prototype.unbind = function () {
  * @param {VVGL.ArrayBuffer} buffer
  */
 VVGL.ShaderProgram.prototype.setAttribute = function (name, buffer) {
-	var location = this.attributes[name];
+	var attribute = this.attributes[name];
 	
-	if (location === undefined) {
+	if (!attribute) {
 		throw new VVGL.Exception("Trying to get undefined attribute: " + name);
 	}
 	
-	gl.vertexAttribPointer(location, buffer.getItemSize(), gl.FLOAT, false, 0, 0);
+	attribute.enable();
+	gl.vertexAttribPointer(attribute.location, buffer.getItemSize(), gl.FLOAT, false, 0, 0);
+};
+
+/**
+ * Unset attribute buffer.
+ * 
+ * @param {string} name
+ */
+VVGL.ShaderProgram.prototype.unsetAttribute = function (name) {
+	var attribute = this.attributes[name];
+	
+	if (!attribute) {
+		throw new VVGL.Exception("Trying to get undefined attribute: " + name);
+	}
+	
+	attribute.disable();
 };
 
 /**
@@ -104,11 +121,78 @@ VVGL.ShaderProgram.prototype.setAttribute = function (name, buffer) {
 VVGL.ShaderProgram.prototype.getUniform = function (name) {
 	var uniform = this.uniforms[name];
 	
-	if (uniform === undefined) {
-		throw new VVGL.Exception("Trying to get undefined uniform: " + name);
+	if (!uniform) {
+		this.addUniform(name);
 	}
 	
 	return (uniform);
+};
+
+/**
+ * Set Int or Bool uniform.
+ * 
+ * @param {string} name Uniform variable name.
+ * @param {number} value Uniform variable value.
+ */
+VVGL.ShaderProgram.prototype.setIntUniform = function (name, value) {
+	gl.uniform1i(this.getUniform(name), value);
+};
+
+/**
+ * @see {@link VVGL.ShaderProgram.prototype.setIntUniform}
+ */
+VVGL.ShaderProgram.prototype.setBoolUniform = VVGL.ShaderProgram.prototype.setIntUniform;
+
+/**
+ * Set Float uniform.
+ * 
+ * @param {string} name Uniform variable name.
+ * @param {number} value Uniform variable value.
+ */
+VVGL.ShaderProgram.prototype.setFloatUniform = function (name, value) {
+	gl.uniform1f(this.getUniform(name), value);
+};
+
+/**
+ * Set Vec3 uniform.
+ * 
+ * @param {string} name Uniform variable name.
+ * @param {VVGL.Vec3} vector Uniform variable value.
+ */
+VVGL.ShaderProgram.prototype.setVector3Uniform = function (name, vector) {
+	gl.uniform3f(this.getUniform(name), vector.x, vector.y, vector.z);
+};
+
+/**
+ * Set Vec4 uniform.
+ * 
+ * @param {string} name Uniform variable name.
+ * @param {VVGL.Vec4} vector Uniform variable value.
+ */
+VVGL.ShaderProgram.prototype.setVector4Uniform = function (name, vector) {
+	gl.uniform4f(this.getUniform(name), vector.x, vector.y, vector.z, vector.w);
+};
+
+
+/**
+ * Set color uniform.
+ * 
+ * @param {string} name Uniform variable name.
+ * @param {VVGL.Color} color Uniform variable value.
+ */
+VVGL.ShaderProgram.prototype.setColorUniform = function (name, color) {
+	gl.uniform3f(this.getUniform(name), color.r, color.g, color.b);
+};
+
+/**
+ * Set Mat3 uniform.
+ * 
+ * @param {string} name Uniform variable name.
+ * @param {VVGL.Mat3} matrix Uniform variable value.
+ */
+VVGL.ShaderProgram.prototype.setMatrix3Uniform = function (name, matrix) {
+	var uniform = this.getUniform(name);
+	gl.uniformMatrix3fv(uniform, false, matrix.toArray());
 };
 
 /**

@@ -48,8 +48,7 @@ VVGL.ArrayBuffer.prototype.getItemSize = function () {
 VVGL.ArrayBuffer.prototype.bind = function () {
 	gl.bindBuffer(this.type, this.buffer);
 	if (this.attribute !== null) {
-		var program = VVGL.ShaderProgram.currentProgram;
-		program.setAttribute(this.attribute, this);
+		VVGL.ShaderProgram.currentProgram.setAttribute(this.attribute, this);
 	}
 };
 
@@ -58,4 +57,7 @@ VVGL.ArrayBuffer.prototype.bind = function () {
  */
 VVGL.ArrayBuffer.prototype.unbind = function () {
 	gl.bindBuffer(this.type, null);
+	if (this.attribute !== null) {
+		VVGL.ShaderProgram.currentProgram.unsetAttribute(this.attribute);
+	}
 };

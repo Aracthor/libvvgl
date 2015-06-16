@@ -1,17 +1,23 @@
 /**
  * Renderable data linkable to {@link VVGL.SceneNode}
  * 
- * @interface
+ * @abstract
+ * @class
+ * @classdesc Renderable data.
+ * @param {string} type
+ * @todo pass to another folder.
  */
-VVGL.SceneData = function () {};
+VVGL.SceneData = function (type) {
+	this.type = type;
+};
 
 /**
- * Render function to override.
+ * Return data type name.
  * 
- * @param {VVGL.Renderer} renderer
+ * @return {string} Data type.
  */
-VVGL.SceneData.prototype.render = function (renderer) {
-	throw new VVGL.ImplementationException(this, "render", "SceneData");
+VVGL.SceneData.prototype.getType = function () {
+	return (this.type);
 };
 
 /**

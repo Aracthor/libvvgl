@@ -17,18 +17,30 @@ VVGL.EventsManager = function (canvas) {
 	var me = this;
 	
 	// Keyboard events
-	document.addEventListener("keydown", function (event) {me.onKeyDown(event.keyCode); event.preventDefault();}, false);
+	document.addEventListener("keydown", function (event) {me.onKeyDown(event.keyCode); }, false);
 	document.addEventListener("keyup", function (event) {me.onKeyUp(event.keyCode);}, false);
-	
+
 	// Mouse events
 	canvas.addEventListener("mousemove", function (event) {me.onMouseMove(event);}, false);
 	canvas.addEventListener("mousedown", function (event) {me.onMouseDown(event);}, false);
 	canvas.addEventListener("mouseup", function (event) {me.onMouseUp(event);}, false);
+    canvas.addEventListener("wheel", function (event) {me.onWheel(event);}, false);
+
+    // Forbid context menu on right-click
+    canvas.addEventListener("contextmenu", function (event) {event.preventDefault(); }, false);
 	
 	// Lock events
 	document.addEventListener('pointerlockerror', me.onLockError, false);
 	document.addEventListener('mozpointerlockerror', me.onLockError, false);
 	document.addEventListener('webkitpointerlockerror', me.onLockError, false);
+};
+
+/**
+ * Prevent default keys actions (Reload for F5, quit on Ctrl+Q or Ctrl+W, etc)
+ */
+VVGL.EventsManager.prototype.preventKeyActions = function () {
+    document.addEventListener("keydown", function (event) {event.preventDefault(); }, false);
+    document.addEventListener("keyup", function (event) {event.preventDefault(); }, false);
 };
 
 /**
@@ -101,6 +113,10 @@ VVGL.EventsManager.prototype.onMouseDown = function (event) {
 		this.mouseLocked = true;
 		VVGL.Mouse.isLocked = true;
 	}
+
+    for (var i in this.eventsHandlers) {
+        this.eventsHandlers[i].onButtonPress(event.button, event.clientX, event.clientY);
+    }
 };
 
 /**
@@ -111,6 +127,23 @@ VVGL.EventsManager.prototype.onMouseDown = function (event) {
  */
 VVGL.EventsManager.prototype.onMouseUp = function (event) {
 	VVGL.Mouse.releaseButton(event.button);
+
+    for (var i in this.eventsHandlers) {
+        this.eventsHandlers[i].onButtonRelease(event.button, event.clientX, event.clientY);
+    }
+};
+
+/**
+ * Called on mouse wheel.
+ *
+ * @private
+ * @param {Object} event Wheel movement details.
+ * @todo handle firefox different values for delta.
+ */
+VVGL.EventsManager.prototype.onWheel = function (event) {
+    for (var i in this.eventsHandlers) {
+        this.eventsHandlers[i].onWheelMovement(event.clientX, event.clientY, event.deltaX, event.deltaY, event.deltaZ);
+    }
 };
 
 /**

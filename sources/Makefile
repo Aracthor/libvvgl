@@ -5,7 +5,7 @@
 ## Login   <aracthor@epitech.net>
 ## 
 ## Started on  Sat Apr 11 09:31:12 2015 aracthor
-## Last Update Sat Apr 25 22:22:39 2015 aracthor
+## Last Update Mon Jun 15 21:39:04 2015 Aracthor
 ##
 
 CC=		cat
@@ -33,12 +33,14 @@ DATA_FILES=	Color.js	\
 DATA_SRCS=	$(DATA_FILES:%.js=$(DATA_DIR)%.js)
 
 EVENTS_DIR=	events/
-EVENTS_FILES=	EventsManager.js	\
-		EventsHandler.js	\
-		Keyboard.js		\
-		KeyEventListener.js	\
-		Mouse.js		\
-		MouseMovementListener.js
+EVENTS_FILES=	EventsManager.js		\
+		EventsHandler.js		\
+		Keyboard.js			\
+		KeyEventListener.js		\
+		Mouse.js			\
+		MouseButtonEventListener.js	\
+		MouseMovementListener.js	\
+		WheelMovementListener.js
 EVENTS_SRCS=	$(EVENTS_FILES:%.js=$(EVENTS_DIR)%.js)
 
 EXCEPTIONS_DIR=		exceptions/
@@ -59,26 +61,43 @@ INTERFACES_FILES=	IBindable.js	\
 			SceneData.js
 INTERFACES_SRCS=	$(INTERFACES_FILES:%.js=$(INTERFACES_DIR)%.js)
 
+LIGHT_DIR=	light/
+LIGHT_FILES=	Light.js		\
+		AmbianceLight.js	\
+		DirectionLight.js	\
+		SpotLight.js
+LIGHT_SRCS=	$(LIGHT_FILES:%.js=$(LIGHT_DIR)%.js)
+
 MATHS_DIR=	maths/
-MATHS_FILES=	Mat4.js		\
+MATHS_FILES=	Mat3.js		\
+		Mat4.js		\
 		Maths.js	\
-		Vec3.js
+		Vec2.js		\
+		Vec3.js		\
+		Vec4.js
 MATHS_SRCS=	$(MATHS_FILES:%.js=$(MATHS_DIR)%.js)
 
 MESH_DIR=	mesh/
 MESH_FILES=	ArrayBuffer.js	\
-		Mesh.js
+		Mesh.js		\
+		Axis.js
 MESH_SRCS=	$(MESH_FILES:%.js=$(MESH_DIR)%.js)
 
 RENDER_DIR=	render/
-RENDER_FILES=	Renderer.js	\
-		Shader.js	\
-		ShaderProgram.js
+RENDER_FILES=	FrameRender.js	\
+		Renderer.js
 RENDER_SRCS=	$(RENDER_FILES:%.js=$(RENDER_DIR)%.js)
 
+SHADER_DIR=	shader/
+SHADER_FILES=	Attribute.js		\
+		Shader.js		\
+		ShaderProgram.js
+SHADER_SRCS=	$(SHADER_FILES:%.js=$(SHADER_DIR)%.js)
+
 SCENE_DIR=	scene/
-SCENE_FILES=	Scene.js	\
-		SceneManager.js	\
+SCENE_FILES=	Scene.js		\
+		SceneManager.js		\
+		Transformable.js	\
 		SceneNode.js
 SCENE_SRCS=	$(SCENE_FILES:%.js=$(SCENE_DIR)%.js)
 
@@ -88,6 +107,10 @@ SUPERVISORS_FILES=	MatrixSupervisor.js	\
 			PerspectiveMatrix.js	\
 			ViewMatrix.js
 SUPERVISORS_SRCS=	$(SUPERVISORS_FILES:%.js=$(SUPERVISORS_DIR)%.js)
+
+TEXTURE_DIR=	texture/
+TEXTURE_FILES=	Texture.js
+TEXTURE_SRCS=	$(TEXTURE_FILES:%.js=$(TEXTURE_DIR)%.js)
 
 TIME_DIR=	time/
 TIME_FILES=	Clock.js
@@ -102,10 +125,13 @@ SRCS=	namespace.js		\
 	$(CAMERA_SRCS)		\
 	$(DATA_SRCS)		\
 	$(EXCEPTIONS_SRCS)	\
+	$(LIGHT_SRCS)		\
 	$(MATHS_SRCS)		\
 	$(MESH_SRCS)		\
 	$(RENDER_SRCS)		\
 	$(SCENE_SRCS)		\
+	$(SHADER_SRCS)		\
+	$(TEXTURE_SRCS)		\
 	$(TIME_SRCS)		\
 #	$(SUPERVISORS_SRCS)
 

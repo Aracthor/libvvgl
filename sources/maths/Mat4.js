@@ -23,6 +23,174 @@ VVGL.Mat4.prototype.identity = function () {
 };
 
 /**
+ * Translate by a 3D-vector.
+ * 
+ * @param {VVGL.Vec3} vector Translation vector.
+ */
+VVGL.Mat4.prototype.translate = function (vector) {
+    var x = vector.x,
+    	y = vector.y,
+    	z = vector.z,
+    	data = this.data;
+
+    data[12] = data[0] * x + data[4] * y + data[8] * z + data[12];
+    data[13] = data[1] * x + data[5] * y + data[9] * z + data[13];
+    data[14] = data[2] * x + data[6] * y + data[10] * z + data[14];
+    data[15] = data[3] * x + data[7] * y + data[11] * z + data[15];
+};
+
+/**
+ * Rotate on X axis by an angle.
+ * 
+ * @param {number} angle Angle in radians.
+ * @todo precalc angles.
+ */
+VVGL.Mat4.prototype.rotateX = function (angle) {
+	var sinus = Math.sin(angle),
+		cosinus = Math.cos(angle),
+		data = this.data,
+        a10 = data[4],
+        a11 = data[5],
+        a12 = data[6],
+        a13 = data[7],
+        a20 = data[8],
+        a21 = data[9],
+        a22 = data[10],
+        a23 = data[11];
+
+    data[4] = a10 * cosinus + a20 * sinus;
+    data[5] = a11 * cosinus + a21 * sinus;
+    data[6] = a12 * cosinus + a22 * sinus;
+    data[7] = a13 * cosinus + a23 * sinus;
+    data[8] = a20 * cosinus - a10 * sinus;
+    data[9] = a21 * cosinus - a11 * sinus;
+    data[10] = a22 * cosinus - a12 * sinus;
+    data[11] = a23 * cosinus - a13 * sinus;
+};
+
+/**
+ * Rotate on Y axis by an angle.
+ * 
+ * @param {number} angle Angle in radians.
+ * @todo precalc angles.
+ */
+VVGL.Mat4.prototype.rotateY = function (angle) {
+    var sinus = Math.sin(angle),
+        cosinus = Math.cos(angle),
+        data = this.data,
+        a00 = data[0],
+        a01 = data[1],
+        a02 = data[2],
+        a03 = data[3],
+        a20 = data[8],
+        a21 = data[9],
+        a22 = data[10],
+        a23 = data[11];
+
+    data[0] = a00 * cosinus - a20 * sinus;
+    data[1] = a01 * cosinus - a21 * sinus;
+    data[2] = a02 * cosinus - a22 * sinus;
+    data[3] = a03 * cosinus - a23 * sinus;
+    data[8] = a00 * sinus + a20 * cosinus;
+    data[9] = a01 * sinus + a21 * cosinus;
+    data[10] = a02 * sinus + a22 * cosinus;
+    data[11] = a03 * sinus + a23 * cosinus;
+};
+
+/**
+ * Rotate on Z axis by an angle.
+ * 
+ * @param {number} angle Angle in radians.
+ * @todo precalc angles.
+ */
+VVGL.Mat4.prototype.rotateZ = function (angle) {
+    var sinus = Math.sin(angle),
+        cosinus = Math.cos(angle),
+        data = this.data,
+        a00 = data[0],
+        a01 = data[1],
+        a02 = data[2],
+        a03 = data[3],
+        a10 = data[4],
+        a11 = data[5],
+        a12 = data[6],
+        a13 = data[7];
+
+    data[0] = a00 * cosinus + a10 * sinus;
+    data[1] = a01 * cosinus + a11 * sinus;
+    data[2] = a02 * cosinus + a12 * sinus;
+    data[3] = a03 * cosinus + a13 * sinus;
+    data[4] = a10 * cosinus - a00 * sinus;
+    data[5] = a11 * cosinus - a01 * sinus;
+    data[6] = a12 * cosinus - a02 * sinus;
+    data[7] = a13 * cosinus - a03 * sinus;
+};
+
+/**
+ * Scale by a vector.
+ * 
+ * @param {VVGL.Vec3} vector
+ */
+VVGL.Mat4.prototype.scale = function (vector) {
+    var x = vector.x,
+    	y = vector.y,
+    	z = vector.z,
+    	data = this.data;
+
+    data[0] *= x;
+    data[1] *= x;
+    data[2] *= x;
+    data[3] *= x;
+    data[4] *= y;
+    data[5] *= y;
+    data[6] *= y;
+    data[7] *= y;
+    data[8] *= z;
+    data[9] *= z;
+    data[10] *= z;
+    data[11] *= z;
+};
+
+/**
+ * Multiply matrix by another.
+ * 
+ * @param {VVGL.Mat4} matrix
+ */
+VVGL.Mat4.prototype.multiply = function (matrix) {
+    var data = this.data,
+    	b = matrix.data,
+    	a00 =  data[0], a01 =  data[1], a02 =  data[2], a03 =  data[3],
+        a10 =  data[4], a11 =  data[5], a12 =  data[6], a13 =  data[7],
+        a20 =  data[8], a21 =  data[9], a22 =  data[10], a23 =  data[11],
+        a30 =  data[12], a31 =  data[13], a32 =  data[14], a33 =  data[15];
+
+    // Cache only the current line of the second matrix
+    var b0  =  b[0], b1 =  b[1], b2 =  b[2], b3 =  b[3];  
+     data[0] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+     data[1] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+     data[2] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+     data[3] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+
+    b0 =  b[4]; b1 =  b[5]; b2 =  b[6]; b3 =  b[7];
+     data[4] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+     data[5] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+     data[6] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+     data[7] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+
+    b0 =  b[8]; b1 =  b[9]; b2 =  b[10]; b3 =  b[11];
+     data[8] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+     data[9] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+     data[10] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+     data[11] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+
+    b0 =  b[12]; b1 =  b[13]; b2 =  b[14]; b3 =  b[15];
+     data[12] = b0*a00 + b1*a10 + b2*a20 + b3*a30;
+     data[13] = b0*a01 + b1*a11 + b2*a21 + b3*a31;
+     data[14] = b0*a02 + b1*a12 + b2*a22 + b3*a32;
+     data[15] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
+};
+
+/**
  * Create a perspective projection matrix.
  * 
  * @param {number} angle Vertical field of view in radians.
@@ -141,6 +309,17 @@ VVGL.Mat4.prototype.lookAt = function (position, target, up) {
 };
 
 /**
+ * Copy matrix data to another preallocated matrix object.
+ * 
+ * @param {VVGL.Mat4} destination
+ */
+VVGL.Mat4.prototype.copyTo = function (destination) {
+	for (var i = 0; i < 16; ++i) {
+		destination.data[i] = this.data[i];
+	}
+};
+
+/**
  * Return a copy of this matrix.
  * 
  * @return {VVGL.Mat4} Copy.
@@ -148,7 +327,7 @@ VVGL.Mat4.prototype.lookAt = function (position, target, up) {
 VVGL.Mat4.prototype.clone = function () {
 	var clone = new VVGL.Mat4();
 	
-	clone.data = this.data.slice();
+	this.copyTo(clone);
 	
 	return (clone);
 };
@@ -160,4 +339,18 @@ VVGL.Mat4.prototype.clone = function () {
  */
 VVGL.Mat4.prototype.toArray = function () {
 	return (this.data);
+};
+
+/**
+ * Convert matrix data to a readable string.
+ * 
+ * @return {string}
+ */
+VVGL.Mat4.prototype.toString = function () {
+	var data = this.data;
+	
+	return ("(" + data[0] + "," + data[1] + "," + data[2] + "," + data[3] + ")\n" +
+			"(" + data[4] + "," + data[5] + "," + data[6] + "," + data[7] + ")\n" +
+			"(" + data[8] + "," + data[9] + "," + data[10] + "," + data[11] + ")\n" +
+			"(" + data[12] + "," + data[13] + "," + data[14] + "," + data[15] + ")\n");
 };
