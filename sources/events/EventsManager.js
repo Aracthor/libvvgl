@@ -17,19 +17,30 @@ VVGL.EventsManager = function (canvas) {
 	var me = this;
 	
 	// Keyboard events
-	document.addEventListener("keydown", function (event) {me.onKeyDown(event.keyCode); event.preventDefault();}, false);
+	document.addEventListener("keydown", function (event) {me.onKeyDown(event.keyCode); }, false);
 	document.addEventListener("keyup", function (event) {me.onKeyUp(event.keyCode);}, false);
-	
+
 	// Mouse events
 	canvas.addEventListener("mousemove", function (event) {me.onMouseMove(event);}, false);
 	canvas.addEventListener("mousedown", function (event) {me.onMouseDown(event);}, false);
 	canvas.addEventListener("mouseup", function (event) {me.onMouseUp(event);}, false);
     canvas.addEventListener("wheel", function (event) {me.onWheel(event);}, false);
+
+    // Forbid context menu on right-click
+    canvas.addEventListener("contextmenu", function (event) {event.preventDefault(); }, false);
 	
 	// Lock events
 	document.addEventListener('pointerlockerror', me.onLockError, false);
 	document.addEventListener('mozpointerlockerror', me.onLockError, false);
 	document.addEventListener('webkitpointerlockerror', me.onLockError, false);
+};
+
+/**
+ * Prevent default keys actions (Reload for F5, quit on Ctrl+Q or Ctrl+W, etc)
+ */
+VVGL.EventsManager.prototype.preventKeyActions = function () {
+    document.addEventListener("keydown", function (event) {event.preventDefault(); }, false);
+    document.addEventListener("keyup", function (event) {event.preventDefault(); }, false);
 };
 
 /**

@@ -2,8 +2,9 @@
  * Webgl Renderer.
  * Graphics control panel.
  * Accessible directly from {@link VVGL.Application}.
- * 
+ *
  * @class
+ * @classdesc Webgl Renderer.
  */
 VVGL.Renderer = function () {
 	this.enableDepth();
@@ -95,7 +96,7 @@ VVGL.Renderer.prototype.disableDepth = function () {
 };
 
 /**
- * Check if backface culling is enabled.
+ * Check if depth test is enabled.
  * 
  * @return {boolean}
  */

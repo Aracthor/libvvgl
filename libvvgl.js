@@ -161,19 +161,30 @@ VVGL.EventsManager = function (canvas) {
 	var me = this;
 	
 	// Keyboard events
-	document.addEventListener("keydown", function (event) {me.onKeyDown(event.keyCode); event.preventDefault();}, false);
+	document.addEventListener("keydown", function (event) {me.onKeyDown(event.keyCode); }, false);
 	document.addEventListener("keyup", function (event) {me.onKeyUp(event.keyCode);}, false);
-	
+
 	// Mouse events
 	canvas.addEventListener("mousemove", function (event) {me.onMouseMove(event);}, false);
 	canvas.addEventListener("mousedown", function (event) {me.onMouseDown(event);}, false);
 	canvas.addEventListener("mouseup", function (event) {me.onMouseUp(event);}, false);
     canvas.addEventListener("wheel", function (event) {me.onWheel(event);}, false);
+
+    // Forbid context menu on right-click
+    canvas.addEventListener("contextmenu", function (event) {event.preventDefault(); }, false);
 	
 	// Lock events
 	document.addEventListener('pointerlockerror', me.onLockError, false);
 	document.addEventListener('mozpointerlockerror', me.onLockError, false);
 	document.addEventListener('webkitpointerlockerror', me.onLockError, false);
+};
+
+/**
+ * Prevent default keys actions (Reload for F5, quit on Ctrl+Q or Ctrl+W, etc)
+ */
+VVGL.EventsManager.prototype.preventKeyActions = function () {
+    document.addEventListener("keydown", function (event) {event.preventDefault(); }, false);
+    document.addEventListener("keyup", function (event) {event.preventDefault(); }, false);
 };
 
 /**
@@ -799,6 +810,15 @@ VVGL.Application.prototype.getSceneManager = function () {
 };
 
 /**
+ * Get application WebGL renderer.
+ *
+ * @return {VVGL.Renderer} Application renderer.
+ */
+VVGL.Application.prototype.getRenderer = function () {
+    return (this.renderer);
+};
+
+/**
  * Lock mouse pointer once user will have clicked.
  */
 VVGL.Application.prototype.lockPointer = function () {
@@ -815,6 +835,13 @@ VVGL.Application.prototype.unlockPointer = function () {
 };
 
 /**
+ * Prevent default keys actions (Reload for F5, quit on Ctrl+Q or Ctrl+W, etc)
+ */
+VVGL.Application.prototype.preventKeyActions = function () {
+    this.eventsManager.preventKeyActions();
+};
+
+/**
  * Window will reload on F5.
  */
 VVGL.Application.prototype.acceptReload = function () {
@@ -827,11 +854,22 @@ VVGL.Application.prototype.acceptReload = function () {
 
 /**
  * Static instance of the application.
- * 
+ *
  * @private
+ * @static
  * @type {VVGL.Application}
  */
 VVGL.Application.instance = null;
+
+/**
+ * Access application instance
+ *
+ * @static
+ * @return {VVGL.Application}
+ */
+VVGL.Application.access = function () {
+    return (VVGL.Application.instance);
+};
 
 /**
  * Recursive loop function called by {@see VVGL.Application.prototype.start}.
@@ -2818,11 +2856,10 @@ VVGL.ArrayBuffer.prototype.unbind = function () {
 	}
 };
 /**
- * Represent a model.
- * 
  * @class
+ * @classdesc Represent a model.
  * @extends VVGL.SceneData
- * @param {VVGL.RenderMode} renderMode
+ * @param {VVGL.RenderMode} [VVGL.RenderMode.TRIANGLES] renderMode
  */
 VVGL.Mesh = function (renderMode) {
 	VVGL.SceneData.call(this, "mesh");
@@ -3184,8 +3221,9 @@ VVGL.FrameRender.prototype.render = function (camera) {
  * Webgl Renderer.
  * Graphics control panel.
  * Accessible directly from {@link VVGL.Application}.
- * 
+ *
  * @class
+ * @classdesc Webgl Renderer.
  */
 VVGL.Renderer = function () {
 	this.enableDepth();
@@ -3277,7 +3315,7 @@ VVGL.Renderer.prototype.disableDepth = function () {
 };
 
 /**
- * Check if backface culling is enabled.
+ * Check if depth test is enabled.
  * 
  * @return {boolean}
  */
@@ -3608,6 +3646,19 @@ VVGL.SceneNode.prototype.update = function (elapsedTime) {
 VVGL.SceneNode.prototype.addChild = function (node) {
 	this.children.push(node);
 	node.parent = this;
+};
+
+/**
+ * Remove child from this node
+ *
+ * @param {VVGL.SceneNode} node Node to remove
+ */
+VVGL.SceneNode.prototype.removeChild = function (node) {
+    var index = this.children.indexOf(node);
+    if (index === -1) {
+        throw new VVGL.Exception("Trying to remove unexisting child from node.");
+    }
+    this.children.slice(index, 1);
 };
 
 /**

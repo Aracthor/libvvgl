@@ -95,6 +95,19 @@ VVGL.SceneNode.prototype.addChild = function (node) {
 };
 
 /**
+ * Remove child from this node
+ *
+ * @param {VVGL.SceneNode} node Node to remove
+ */
+VVGL.SceneNode.prototype.removeChild = function (node) {
+    var index = this.children.indexOf(node);
+    if (index === -1) {
+        throw new VVGL.Exception("Trying to remove unexisting child from node.");
+    }
+    this.children.slice(index, 1);
+};
+
+/**
  * Return node parent.
  * 
  * @return {VVGL.SceneNode} Parent node.
