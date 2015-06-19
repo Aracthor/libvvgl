@@ -928,9 +928,8 @@ VVGL.fusionClasses = function (prototype1, prototype2) {
 	return (fusion);
 };
 /**
- * Base camera class.
- * 
  * @class
+ * @classdesc Base camera class.
  * @extends VVGL.EventsHandler
  * @extends VVGL.SceneData
  */
@@ -1026,10 +1025,8 @@ VVGL.Camera.prototype.getView = function () {
 	return (this.view);
 };
 /**
- * Camera with target fixed to a point,
- * With position turning around with mouse movements.
- * 
  * @class
+ * @classdesc Camera free to move everywhere, moving with keyboard, turning with mouse.
  * @extends VVGL.Camera
  */
 VVGL.FreeFlyCamera = function () {
@@ -1187,10 +1184,8 @@ VVGL.FreeFlyCamera.turnCamera = function (camera, x, y) {
 	}
 };
 /**
- * Camera with target fixed to a point,
- * With position turning around with mouse movements.
- * 
  * @class
+ * @classdesc Camera with target fixed to a point, with position turning around with mouse movements.
  * @extends VVGL.Camera
  */
 VVGL.TrackballCamera = function () {
@@ -1350,10 +1345,10 @@ VVGL.TrackballCamera.zoom = function (camera, x, y, deltaX, deltaY, deltaZ) {
     }
 };
 /**
- * Functions for color-integer manipulation.
- * 
- * @class Functions for color-number manipulation.
- * @constructor
+ * Create black color.
+ *
+ * @class
+ * @classdesc Functions for color-number manipulation.
  */
 VVGL.Color = function () {};
 
@@ -1521,84 +1516,6 @@ VVGL.Color.cyan = new VVGL.Color();
  * @const
  */
 VVGL.Color.white = new VVGL.Color();
-/**
- * Associative array.
- * 
- * @class Associative array.
- * @constructor
- */
-VVGL.Map = function () {};
-
-/**
- * Key list
- * 
- * @type {Array}
- */
-VVGL.Map.prototype.keys = [];
-
-/**
- * Values list
- * 
- * @type {Array}
- */
-VVGL.Map.prototype.values = [];
-
-/**
- * Add new set of key/value.
- * 
- * @param {Object} key The element's key
- * @param {Object} value The element's value
- */
-VVGL.Map.prototype.add = function (key, value) {
-	this.keys.push(key);
-	this.values.push(value);
-};
-
-/**
- * Return a value associated with a key.
- * 
- * @param {Object} key The key to search.
- * @return {Object} The associated value, or null if there is no associated value.
- */
-VVGL.Map.prototype.getFromKey = function (key) {
-	var index = 0;
-	var value = null;
-	
-	while (index < this.keys.length && this.keys[index] != key) {
-		++index;
-	}
-	
-	if (index < this.keys.length) {
-		value = this.values[index];
-	}
-	
-	return (value);
-};
-
-/**
- * Return a key associated with a value.
- * 
- * @param {Object} value The value to search.
- * @return {Object} The associated key, or null if there is no key value.
- */
-VVGL.Map.prototype.getFromValue = function (value) {
-	var index = 0;
-	var key = null;
-	
-	while (index < this.values.length && this.values[index] != value) {
-		++index;
-	}
-	
-	if (index < this.values.length) {
-		key = this.keys[index];
-	}
-	
-	return (key);
-};
-
-VVGL.Map.prototype.getLength = function () {
-	return (this.keys.length);
-};
 /**
  * Exception base for all exception classes.
  * Every exception contains at least a message and sometimes more, depending of the type.
@@ -1859,10 +1776,10 @@ VVGL.SpotLight.prototype.sendToShader = function (shader) {
 VVGL.SpotLight.prototype.update = function (elapsedTime) {
 };
 /**
- * A 4x4 float matrix.
  * Created as an identity matrix.
  * 
  * @class
+ * @classdesc A 3x3 float matrix.
  */
 VVGL.Mat3 = function () {
 	this.data = new Float32Array(3 * 3);
@@ -2043,10 +1960,10 @@ VVGL.Mat3.prototype.toString = function () {
 			"(" + data[6] + "," + data[7] + "," + data[8] + ")\n");
 };
 /**
- * A 4x4 float matrix.
  * Created as an identity matrix.
  * 
  * @class
+ * @classdesc A 4x4 float matrix.
  */
 VVGL.Mat4 = function () {
 	this.data = new Float32Array(4 * 4);
@@ -2399,18 +2316,67 @@ VVGL.Mat4.prototype.toString = function () {
 			"(" + data[12] + "," + data[13] + "," + data[14] + "," + data[15] + ")\n");
 };
 /**
- * Maths help functions and numbers.
- * 
- * @class Maths help functions and numbers.
+ * @class
+ * @classdesc Maths help functions and numbers.
  */
 VVGL.Maths = {};
 
 VVGL.Maths.PI = 3.14159265359;
 /**
- * A 4-dimensional vector.
+ * @class
+ * @classdesc Random number generator
+ * @param {number} seed Generation seed
+ */
+VVGL.Random = function (seed) {
+    if (seed === undefined) {
+        seed = new Date().getTime();
+    }
+
+    this.seed = [
+        (seed >> 10) & 0xFFFF,
+        seed & 0xFFFF
+    ];
+    this.mult = [
+        0xE66D,
+        0xDEEC
+    ];
+
+    for (var i = 0; i < 10; ++i) {
+        this.randomInt();
+    }
+};
+
+/**
+ * Generate a random 16-bit Integer
  *
- * @class A 4-dimensional vector.
- * @constructor
+ * @return {number} Random number
+ */
+VVGL.Random.prototype.randomInt = function () {
+    var accu = (this.mult[0] * this.seed[0]) & 0xFFFF;
+    var temp = accu;
+
+    accu = (accu << 0x10) >>> 0;
+    accu += this.mult[0] * this.seed[1] +
+            this.mult[1] * this.seed[0];
+    this.seed[0] = temp;
+    this.seed[1] = accu & 0xFFFF;
+
+    return (this.seed[1]);
+};
+
+/**
+ * Generate a random float number between 0 and 1.
+ *
+ * @return {number} Random number
+ */
+VVGL.Random.prototype.randomFloat = function () {
+    return (this.randomInt() / 0xFFFF);
+};
+/**
+ * Create a vector null or from numbers.
+ *
+ * @class
+ * @classdesc A 4-dimensional vector.
  * @param {number} [0] x X-axis value.
  * @param {number} [0] y Y-axis value.
  */
@@ -2513,10 +2479,10 @@ VVGL.Vec2.prototype.toArray = function () {
 };
 
 /**
- * A 3-dimensional vector.
+ * Create a vector null or from numbers.
  * 
- * @class A 3-dimensional vector.
- * @constructor
+ * @class
+ * @classdesc A 3-dimensional vector.
  * @param {number} [0] x X-axis value.
  * @param {number} [0] y Y-axis value.
  * @param {number} [0] z Z-axis value.
@@ -2709,10 +2675,10 @@ VVGL.Vec3.crossProduct = function (u, v) {
 						  u.x * v.y - u.y * v.x));
 };
 /**
- * A 4-dimensional vector.
+ * Create a vector null or from numbers.
  * 
- * @class A 4-dimensional vector.
- * @constructor
+ * @class
+ * @classdesc A 4-dimensional vector.
  * @param {number} [0] x X-axis value.
  * @param {number} [0] y Y-axis value.
  * @param {number} [0] z Z-axis value.
@@ -2840,10 +2806,10 @@ VVGL.Vec4.prototype.toArray = function () {
 };
 
 /**
- * OpenGL buffer to store mesh data.
  * Can be a vertice feature (position, color, textureCoord or normal) or Element indices.
  * 
  * @class
+ * @classdesc OpenGL buffer to store mesh data.
  * @implements {VVGL.IBindable}
  * @param {number} type GL enum : gl.ARRAY_BUFFER or gl.ELEMENT_BUFFER.
  * @param {Array} data Array containing data.
@@ -3118,8 +3084,8 @@ VVGL.Mesh.prototype.render = function () {
 VVGL.Mesh.prototype.update = function (elapsedTime) {};
 /**
  * @class
- * @extends VVGL.Mesh
  * @classdesc Mesh representing axis in 3 Dimentions.
+ * @extends VVGL.Mesh
  * @param {number} length Lines length.
  */
 VVGL.Axis = function (length) {
@@ -3387,9 +3353,8 @@ VVGL.Renderer.prototype.disableBackfaceCulling = function () {
 	gl.disable(gl.CULL_FACE);
 };
 /**
- * World scene.
- * 
  * @class
+ * @classdesc World scene.
  */
 VVGL.Scene = function () {
 	this.root = new VVGL.SceneNode(null, null);
@@ -3425,14 +3390,12 @@ VVGL.Scene.prototype.getRoot = function () {
 	return (this.root);
 };
 /**
- * Manager of scenes selection.
- * 
- * @class Manager of scenes selection.
- * @constructor
+ * @class
+ * @classdesc Manager of scenes selection.
  * @private
  */
 VVGL.SceneManager = function () {
-	this.scenes = new VVGL.Map();
+	this.scenes = [];
 	this.currentScene = null;
 };
 
@@ -3446,7 +3409,7 @@ VVGL.SceneManager = function () {
 VVGL.SceneManager.prototype.addScene = function(name, scene, select) {
 	select = VVGL.setIfUndefined(select, false);
 	
-	this.scenes.add(name, scene);
+	this.scenes[name] = scene;
 	if (select) {
 		this.currentScene = scene;
 	}
@@ -3600,13 +3563,13 @@ VVGL.Transformable.prototype.getMatrix = function () {
 	return (this.matrix);
 };
 /**
- * The mother class for all node scene classes, including the scene root.
+ * Create new node from Renderable data and optional parent.
  * 
  * @class
  * @classdesc The mother class for all node scene classes.
  * @extends VVGL.Transformable
- * @param {VVGL.SceneData} data Renderable data.
- * @param {VVGL.SceneNode} parent Node parent.
+ * @param {VVGL.SceneData} [null] data Renderable data.
+ * @param {VVGL.SceneNode} [null] parent Node parent.
  */
 VVGL.SceneNode = function (data, parent) {
 	VVGL.Transformable.call(this);

@@ -1,12 +1,10 @@
 /**
- * Manager of scenes selection.
- * 
- * @class Manager of scenes selection.
- * @constructor
+ * @class
+ * @classdesc Manager of scenes selection.
  * @private
  */
 VVGL.SceneManager = function () {
-	this.scenes = new VVGL.Map();
+	this.scenes = [];
 	this.currentScene = null;
 };
 
@@ -20,7 +18,7 @@ VVGL.SceneManager = function () {
 VVGL.SceneManager.prototype.addScene = function(name, scene, select) {
 	select = VVGL.setIfUndefined(select, false);
 	
-	this.scenes.add(name, scene);
+	this.scenes[name] = scene;
 	if (select) {
 		this.currentScene = scene;
 	}

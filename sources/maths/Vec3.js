@@ -1,8 +1,8 @@
 /**
- * A 3-dimensional vector.
+ * Create a vector null or from numbers.
  * 
- * @class A 3-dimensional vector.
- * @constructor
+ * @class
+ * @classdesc A 3-dimensional vector.
  * @param {number} [0] x X-axis value.
  * @param {number} [0] y Y-axis value.
  * @param {number} [0] z Z-axis value.

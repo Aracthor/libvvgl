@@ -1,11 +1,11 @@
 /**
- * The mother class for all node scene classes, including the scene root.
+ * Create new node from Renderable data and optional parent.
  * 
  * @class
  * @classdesc The mother class for all node scene classes.
  * @extends VVGL.Transformable
- * @param {VVGL.SceneData} data Renderable data.
- * @param {VVGL.SceneNode} parent Node parent.
+ * @param {VVGL.SceneData} [null] data Renderable data.
+ * @param {VVGL.SceneNode} [null] parent Node parent.
  */
 VVGL.SceneNode = function (data, parent) {
 	VVGL.Transformable.call(this);

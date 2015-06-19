@@ -1,7 +1,6 @@
 /**
- * Base camera class.
- * 
  * @class
+ * @classdesc Base camera class.
  * @extends VVGL.EventsHandler
  * @extends VVGL.SceneData
  */

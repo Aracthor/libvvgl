@@ -1,7 +1,6 @@
 /**
- * World scene.
- * 
  * @class
+ * @classdesc World scene.
  */
 VVGL.Scene = function () {
 	this.root = new VVGL.SceneNode(null, null);

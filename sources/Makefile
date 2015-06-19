@@ -5,7 +5,7 @@
 ## Login   <aracthor@epitech.net>
 ## 
 ## Started on  Sat Apr 11 09:31:12 2015 aracthor
-## Last Update Mon Jun 15 21:39:04 2015 Aracthor
+## Last Update Fri Jun 19 17:18:57 2015 Aracthor
 ##
 
 CC=		cat
@@ -28,8 +28,7 @@ CORE_FILES=	Application.js	\
 CORE_SRCS=	$(CORE_FILES:%.js=$(CORE_DIR)%.js)
 
 DATA_DIR=	data/
-DATA_FILES=	Color.js	\
-		Map.js
+DATA_FILES=	Color.js
 DATA_SRCS=	$(DATA_FILES:%.js=$(DATA_DIR)%.js)
 
 EVENTS_DIR=	events/
@@ -72,6 +71,7 @@ MATHS_DIR=	maths/
 MATHS_FILES=	Mat3.js		\
 		Mat4.js		\
 		Maths.js	\
+		Random.js	\
 		Vec2.js		\
 		Vec3.js		\
 		Vec4.js
