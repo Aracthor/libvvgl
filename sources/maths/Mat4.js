@@ -1,8 +1,8 @@
 /**
- * A 4x4 float matrix.
  * Created as an identity matrix.
  * 
  * @class
+ * @classdesc A 4x4 float matrix.
  */
 VVGL.Mat4 = function () {
 	this.data = new Float32Array(4 * 4);

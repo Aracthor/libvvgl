@@ -1,8 +1,6 @@
 /**
- * Camera with target fixed to a point,
- * With position turning around with mouse movements.
- * 
  * @class
+ * @classdesc Camera free to move everywhere, moving with keyboard, turning with mouse.
  * @extends VVGL.Camera
  */
 VVGL.FreeFlyCamera = function () {

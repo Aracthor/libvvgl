@@ -1,8 +1,6 @@
 /**
- * Camera with target fixed to a point,
- * With position turning around with mouse movements.
- * 
  * @class
+ * @classdesc Camera with target fixed to a point, with position turning around with mouse movements.
  * @extends VVGL.Camera
  */
 VVGL.TrackballCamera = function () {

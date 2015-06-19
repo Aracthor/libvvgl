@@ -1,7 +1,7 @@
 /**
  * @class
- * @extends VVGL.Mesh
  * @classdesc Mesh representing axis in 3 Dimentions.
+ * @extends VVGL.Mesh
  * @param {number} length Lines length.
  */
 VVGL.Axis = function (length) {

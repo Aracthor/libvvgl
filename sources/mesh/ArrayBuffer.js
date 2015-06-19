@@ -1,8 +1,8 @@
 /**
- * OpenGL buffer to store mesh data.
  * Can be a vertice feature (position, color, textureCoord or normal) or Element indices.
  * 
  * @class
+ * @classdesc OpenGL buffer to store mesh data.
  * @implements {VVGL.IBindable}
  * @param {number} type GL enum : gl.ARRAY_BUFFER or gl.ELEMENT_BUFFER.
  * @param {Array} data Array containing data.

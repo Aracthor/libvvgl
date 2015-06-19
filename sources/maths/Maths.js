@@ -1,7 +1,6 @@
 /**
- * Maths help functions and numbers.
- * 
- * @class Maths help functions and numbers.
+ * @class
+ * @classdesc Maths help functions and numbers.
  */
 VVGL.Maths = {};
 

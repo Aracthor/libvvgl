@@ -1,8 +1,8 @@
 /**
- * A 3-dimensional vector.
+ * Create a vector null or from numbers.
  * 
- * @class A 3-dimensional vector.
- * @constructor
+ * @class
+ * @classdesc A 3-dimensional vector.
  * @param {number} [0] x X-axis value.
  * @param {number} [0] y Y-axis value.
  * @param {number} [0] z Z-axis value.
@@ -49,7 +49,7 @@ VVGL.Vec3.prototype.add = function (vector) {
 };
 
 /**
- * Substract another vector to this one.
+ * subtract another vector to this one.
  * 
  * @param {VVGL.Vec3} vector
  */
@@ -133,6 +133,53 @@ VVGL.Vec3.prototype.toArray = function () {
 	return ([this.x, this.y, this.z]);
 };
 
+/**
+ * Adds two Vectors
+ *
+ * @static
+ * @param {VVGL.Vec3} u
+ * @param {VVGL.Vec3} v
+ * @return {VVGL.Vec3} addition between them
+ */
+VVGL.Vec3.add = function (u, v) {
+    return (
+        new VVGL.Vec3(
+            u.x + v.x,
+            u.y + v.y,
+            u.z + v.z));
+};
+
+/**
+ * Subtracts two Vectors
+ *
+ * @static
+ * @param {VVGL.Vec3} u
+ * @param {VVGL.Vec3} v
+ * @return {VVGL.Vec3} subtraction between them
+ */
+VVGL.Vec3.sub = function (u, v) {
+    return (
+        new VVGL.Vec3(
+            u.x - v.x,
+            u.y - v.y,
+            u.z - v.z));
+};
+
+/**
+ * Get center of two vectors
+ *
+ * @static
+ * @param {VVGL.Vec3} u
+ * @param {VVGL.Vec3} v
+ * @return {VVGL.Vec3} center between them
+ */
+VVGL.Vec3.center = function (u, v) {
+    return (
+        new VVGL.Vec3(
+            (u.x + v.x) / 2,
+            (u.y + v.y) / 2,
+            (u.z + v.z) / 2));
+}
 
 /**
  * Return a new vector storing cross product between parameters.

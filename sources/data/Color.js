@@ -1,8 +1,8 @@
 /**
- * Functions for color-integer manipulation.
- * 
- * @class Functions for color-number manipulation.
- * @constructor
+ * Create black color.
+ *
+ * @class
+ * @classdesc Functions for color-number manipulation.
  */
 VVGL.Color = function () {};
 

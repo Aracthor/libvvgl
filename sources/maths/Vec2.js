@@ -1,8 +1,8 @@
 /**
- * A 4-dimensional vector.
+ * Create a vector null or from numbers.
  *
- * @class A 4-dimensional vector.
- * @constructor
+ * @class
+ * @classdesc A 4-dimensional vector.
  * @param {number} [0] x X-axis value.
  * @param {number} [0] y Y-axis value.
  */
