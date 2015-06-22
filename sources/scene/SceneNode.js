@@ -4,16 +4,16 @@
  * @class
  * @classdesc The mother class for all node scene classes.
  * @extends VVGL.Transformable
- * @param {VVGL.SceneData} [null] data Renderable data.
- * @param {VVGL.SceneNode} [null] parent Node parent.
+ * @param {VVGL.SceneData} [data=null] data Renderable data.
+ * @param {VVGL.SceneData} [id] data Renderable data.
  */
-VVGL.SceneNode = function (data, parent) {
+VVGL.SceneNode = function (data, id) {
 	VVGL.Transformable.call(this);
-	data = VVGL.setIfUndefined(data, null);
-	parent = VVGL.setIfUndefined(parent, null);
-	this.data = data;
-	this.parent = parent;
+	this.data = VVGL.setIfUndefined(data, null);
+    this.id = VVGL.setIfUndefined(id, VVGL.SceneNode.getUniqueId());
+	this.parent = null;
 	this.children = [];
+    ++VVGL.SceneNode.created;
 };
 
 VVGL.SceneNode.prototype = Object.create(VVGL.Transformable.prototype);
@@ -32,6 +32,14 @@ VVGL.SceneNode.prototype.data = null;
  * @type {VVGL.SceneNode}
  */
 VVGL.SceneNode.prototype.parent = null;
+
+/**
+ * Define if the node (and its children) is visible on scene.
+ *
+ * @type {boolean}
+ * @default
+ */
+VVGL.SceneNode.prototype.visible = true;
 
 /**
  * Update node model matrix and its children model matrices.
@@ -56,13 +64,15 @@ VVGL.SceneNode.prototype.updateMatrix = function () {
  * @param {VVGL.Renderer} renderer
  */
 VVGL.SceneNode.prototype.render = function (renderer) {
-	if (this.data !== null) {
-		renderer.addToRenderList(this.data, this.matrix);
-	}
-	
-	for (var i in this.children) {
-		this.children[i].render(renderer);
-	}
+    if (this.visible) {
+        if (this.data !== null) {
+            renderer.addToRenderList(this.data, this.matrix);
+        }
+
+        for (var i in this.children) {
+            this.children[i].render(renderer);
+        }
+    }
 };
 
 /**
@@ -104,7 +114,7 @@ VVGL.SceneNode.prototype.removeChild = function (node) {
     if (index === -1) {
         throw new VVGL.Exception("Trying to remove unexisting child from node.");
     }
-    this.children.slice(index, 1);
+    this.children.splice(index, 1);
 };
 
 /**
@@ -123,4 +133,25 @@ VVGL.SceneNode.prototype.getParent = function () {
  */
 VVGL.SceneNode.prototype.getChildren = function () {
 	return (this.children);
+};
+
+
+/**
+ * Node created counter.
+ *
+ * @static
+ * @private
+ * @type {number}
+ */
+VVGL.SceneNode.created = 0;
+
+/**
+ * Get unique scene Id
+ *
+ * @static
+ * @private
+ * @return {string}
+ */
+VVGL.SceneNode.getUniqueId = function () {
+    return (VVGL.SceneNode.created.toString());
 };

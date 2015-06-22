@@ -3,8 +3,8 @@
  *
  * @class
  * @classdesc A 4-dimensional vector.
- * @param {number} [0] x X-axis value.
- * @param {number} [0] y Y-axis value.
+ * @param {number} [x=0] X-axis value.
+ * @param {number} [y=0] Y-axis value.
  */
 VVGL.Vec2 = function (x, y) {
     if (x !== undefined) {

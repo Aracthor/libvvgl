@@ -25,7 +25,6 @@ VVGL.Application.prototype = Object.create(VVGL.EventsHandler.prototype);
  * @private
  */
 VVGL.Application.prototype.initAPI = function () {
-	VVGL.Color.initStaticValues();
 	this.eventsManager = new VVGL.EventsManager(this.canvas);
 	this.sceneManager = new VVGL.SceneManager();
 	VVGL.EventsHandler.call(this, this.eventsManager);

@@ -1,7 +1,7 @@
 /**
  * @class
  * @classdesc Random number generator
- * @param {number} seed Generation seed
+ * @param {number} [seed] Generation seed
  */
 VVGL.Random = function (seed) {
     if (seed === undefined) {

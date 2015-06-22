@@ -3,9 +3,9 @@
  * 
  * @class
  * @classdesc A 3-dimensional vector.
- * @param {number} [0] x X-axis value.
- * @param {number} [0] y Y-axis value.
- * @param {number} [0] z Z-axis value.
+ * @param {number} [x=0] X-axis value.
+ * @param {number} [y=0] Y-axis value.
+ * @param {number} [z=0] Z-axis value.
  */
 VVGL.Vec3 = function (x, y, z) {
 	if (x !== undefined) {
@@ -180,6 +180,18 @@ VVGL.Vec3.center = function (u, v) {
             (u.y + v.y) / 2,
             (u.z + v.z) / 2));
 }
+
+/**
+ * Get distance between two vectors
+ *
+ * @static
+ * @param {VVGL.Vec3} u
+ * @param {VVGL.Vec3} v
+ * @return {number} distance between them
+ */
+VVGL.Vec3.distance = function (u, v) {
+    return (VVGL.Vec3.sub(u, v).getNorm());
+};
 
 /**
  * Return a new vector storing cross product between parameters.

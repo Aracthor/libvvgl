@@ -2,7 +2,7 @@
  * @class
  * @classdesc Represent a model.
  * @extends VVGL.SceneData
- * @param {VVGL.RenderMode} [VVGL.RenderMode.TRIANGLES] renderMode
+ * @param {VVGL.RenderMode} [renderMode=VVGL.RenderMode.TRIANGLES]
  */
 VVGL.Mesh = function (renderMode) {
 	VVGL.SceneData.call(this, "mesh");

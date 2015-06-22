@@ -732,7 +732,6 @@ VVGL.Application.prototype = Object.create(VVGL.EventsHandler.prototype);
  * @private
  */
 VVGL.Application.prototype.initAPI = function () {
-	VVGL.Color.initStaticValues();
 	this.eventsManager = new VVGL.EventsManager(this.canvas);
 	this.sceneManager = new VVGL.SceneManager();
 	VVGL.EventsHandler.call(this, this.eventsManager);
@@ -1345,12 +1344,21 @@ VVGL.TrackballCamera.zoom = function (camera, x, y, deltaX, deltaY, deltaZ) {
     }
 };
 /**
- * Create black color.
+ * Create color from arguments, or black color if none.
  *
  * @class
  * @classdesc Functions for color-number manipulation.
+ * @param {number} [r=0] Red value (between 0 and 1)
+ * @param {number} [g=0] Green value (between 0 and 1)
+ * @param {number} [b=0] Blue value (between 0 and 1)
+ * @param {number} [a=1] Alpha value (between 0 and 1)
  */
-VVGL.Color = function () {};
+VVGL.Color = function (r, g, b, a) {
+    this.r = VVGL.setIfUndefined(r, 0.0);
+    this.g = VVGL.setIfUndefined(g, 0.0);
+    this.b = VVGL.setIfUndefined(b, 0.0);
+    this.a = VVGL.setIfUndefined(a, 1.0);
+};
 
 /**
  * Red color data
@@ -1438,28 +1446,12 @@ VVGL.Color.prototype.clone = function () {
 
 
 /**
- * Initialize const color values.
- * 
- * @private
- */
-VVGL.Color.initStaticValues = function () {
-	VVGL.Color.black.setFromFloatNumbers(0.0, 0.0, 0.0);
-	VVGL.Color.red.setFromFloatNumbers(1.0, 0.0, 0.0);
-	VVGL.Color.green.setFromFloatNumbers(0.0, 1.0, 0.0);
-	VVGL.Color.blue.setFromFloatNumbers(0.0, 0.0, 1.0);
-	VVGL.Color.yellow.setFromFloatNumbers(1.0, 1.0, 0.0);
-	VVGL.Color.magenta.setFromFloatNumbers(1.0, 0.0, 1.0);
-	VVGL.Color.cyan.setFromFloatNumbers(0.0, 1.0, 1.0);
-	VVGL.Color.white.setFromFloatNumbers(1.0, 1.0, 1.0);
-};
-
-/**
  * Black color instance.
  * 
  * @type {VVGL.Color}
  * @const
  */
-VVGL.Color.black = new VVGL.Color();
+VVGL.Color.black = new VVGL.Color(0, 0, 0);
 
 /**
  * Red color instance.
@@ -1467,7 +1459,7 @@ VVGL.Color.black = new VVGL.Color();
  * @type {VVGL.Color}
  * @const
  */
-VVGL.Color.red = new VVGL.Color();
+VVGL.Color.red = new VVGL.Color(1, 0, 0);
 
 /**
  * Green color instance.
@@ -1475,7 +1467,7 @@ VVGL.Color.red = new VVGL.Color();
  * @type {VVGL.Color}
  * @const
  */
-VVGL.Color.green = new VVGL.Color();
+VVGL.Color.green = new VVGL.Color(0, 1, 0);
 
 /**
  * Blue color instance.
@@ -1483,7 +1475,7 @@ VVGL.Color.green = new VVGL.Color();
  * @type {VVGL.Color}
  * @const
  */
-VVGL.Color.blue = new VVGL.Color();
+VVGL.Color.blue = new VVGL.Color(0, 0, 1);
 
 /**
  * Yellow color instance.
@@ -1491,7 +1483,7 @@ VVGL.Color.blue = new VVGL.Color();
  * @type {VVGL.Color}
  * @const
  */
-VVGL.Color.yellow = new VVGL.Color();
+VVGL.Color.yellow = new VVGL.Color(1, 1, 0);
 
 /**
  * Magenta color instance.
@@ -1499,7 +1491,7 @@ VVGL.Color.yellow = new VVGL.Color();
  * @type {VVGL.Color}
  * @const
  */
-VVGL.Color.magenta = new VVGL.Color();
+VVGL.Color.magenta = new VVGL.Color(1, 0, 1);
 
 /**
  * Cyan color instance.
@@ -1507,7 +1499,7 @@ VVGL.Color.magenta = new VVGL.Color();
  * @type {VVGL.Color}
  * @const
  */
-VVGL.Color.cyan = new VVGL.Color();
+VVGL.Color.cyan = new VVGL.Color(0, 1, 1);
 
 /**
  * White color instance.
@@ -1515,7 +1507,7 @@ VVGL.Color.cyan = new VVGL.Color();
  * @type {VVGL.Color}
  * @const
  */
-VVGL.Color.white = new VVGL.Color();
+VVGL.Color.white = new VVGL.Color(1, 1, 1);
 /**
  * Exception base for all exception classes.
  * Every exception contains at least a message and sometimes more, depending of the type.
@@ -2325,7 +2317,7 @@ VVGL.Maths.PI = 3.14159265359;
 /**
  * @class
  * @classdesc Random number generator
- * @param {number} seed Generation seed
+ * @param {number} [seed] Generation seed
  */
 VVGL.Random = function (seed) {
     if (seed === undefined) {
@@ -2377,8 +2369,8 @@ VVGL.Random.prototype.randomFloat = function () {
  *
  * @class
  * @classdesc A 4-dimensional vector.
- * @param {number} [0] x X-axis value.
- * @param {number} [0] y Y-axis value.
+ * @param {number} [x=0] X-axis value.
+ * @param {number} [y=0] Y-axis value.
  */
 VVGL.Vec2 = function (x, y) {
     if (x !== undefined) {
@@ -2483,9 +2475,9 @@ VVGL.Vec2.prototype.toArray = function () {
  * 
  * @class
  * @classdesc A 3-dimensional vector.
- * @param {number} [0] x X-axis value.
- * @param {number} [0] y Y-axis value.
- * @param {number} [0] z Z-axis value.
+ * @param {number} [x=0] X-axis value.
+ * @param {number} [y=0] Y-axis value.
+ * @param {number} [z=0] Z-axis value.
  */
 VVGL.Vec3 = function (x, y, z) {
 	if (x !== undefined) {
@@ -2662,6 +2654,18 @@ VVGL.Vec3.center = function (u, v) {
 }
 
 /**
+ * Get distance between two vectors
+ *
+ * @static
+ * @param {VVGL.Vec3} u
+ * @param {VVGL.Vec3} v
+ * @return {number} distance between them
+ */
+VVGL.Vec3.distance = function (u, v) {
+    return (VVGL.Vec3.sub(u, v).getNorm());
+};
+
+/**
  * Return a new vector storing cross product between parameters.
  * 
  * @static
@@ -2679,10 +2683,10 @@ VVGL.Vec3.crossProduct = function (u, v) {
  * 
  * @class
  * @classdesc A 4-dimensional vector.
- * @param {number} [0] x X-axis value.
- * @param {number} [0] y Y-axis value.
- * @param {number} [0] z Z-axis value.
- * @param {number} [0] w W-axis value.
+ * @param {number} [x=0] X-axis value.
+ * @param {number} [y=0] Y-axis value.
+ * @param {number} [z=0] Z-axis value.
+ * @param {number} [w=0] W-axis value.
  */
 VVGL.Vec4 = function (x, y, z, w) {
 	if (x !== undefined) {
@@ -2872,7 +2876,7 @@ VVGL.ArrayBuffer.prototype.unbind = function () {
  * @class
  * @classdesc Represent a model.
  * @extends VVGL.SceneData
- * @param {VVGL.RenderMode} [VVGL.RenderMode.TRIANGLES] renderMode
+ * @param {VVGL.RenderMode} [renderMode=VVGL.RenderMode.TRIANGLES]
  */
 VVGL.Mesh = function (renderMode) {
 	VVGL.SceneData.call(this, "mesh");
@@ -3357,7 +3361,7 @@ VVGL.Renderer.prototype.disableBackfaceCulling = function () {
  * @classdesc World scene.
  */
 VVGL.Scene = function () {
-	this.root = new VVGL.SceneNode(null, null);
+	this.root = new VVGL.SceneNode(null);
 	this.activeCamera = null;
 };
 
@@ -3568,16 +3572,16 @@ VVGL.Transformable.prototype.getMatrix = function () {
  * @class
  * @classdesc The mother class for all node scene classes.
  * @extends VVGL.Transformable
- * @param {VVGL.SceneData} [null] data Renderable data.
- * @param {VVGL.SceneNode} [null] parent Node parent.
+ * @param {VVGL.SceneData} [data=null] data Renderable data.
+ * @param {VVGL.SceneData} [id] data Renderable data.
  */
-VVGL.SceneNode = function (data, parent) {
+VVGL.SceneNode = function (data, id) {
 	VVGL.Transformable.call(this);
-	data = VVGL.setIfUndefined(data, null);
-	parent = VVGL.setIfUndefined(parent, null);
-	this.data = data;
-	this.parent = parent;
+	this.data = VVGL.setIfUndefined(data, null);
+    this.id = VVGL.setIfUndefined(id, VVGL.SceneNode.getUniqueId());
+	this.parent = null;
 	this.children = [];
+    ++VVGL.SceneNode.created;
 };
 
 VVGL.SceneNode.prototype = Object.create(VVGL.Transformable.prototype);
@@ -3596,6 +3600,14 @@ VVGL.SceneNode.prototype.data = null;
  * @type {VVGL.SceneNode}
  */
 VVGL.SceneNode.prototype.parent = null;
+
+/**
+ * Define if the node (and its children) is visible on scene.
+ *
+ * @type {boolean}
+ * @default
+ */
+VVGL.SceneNode.prototype.visible = true;
 
 /**
  * Update node model matrix and its children model matrices.
@@ -3620,13 +3632,15 @@ VVGL.SceneNode.prototype.updateMatrix = function () {
  * @param {VVGL.Renderer} renderer
  */
 VVGL.SceneNode.prototype.render = function (renderer) {
-	if (this.data !== null) {
-		renderer.addToRenderList(this.data, this.matrix);
-	}
-	
-	for (var i in this.children) {
-		this.children[i].render(renderer);
-	}
+    if (this.visible) {
+        if (this.data !== null) {
+            renderer.addToRenderList(this.data, this.matrix);
+        }
+
+        for (var i in this.children) {
+            this.children[i].render(renderer);
+        }
+    }
 };
 
 /**
@@ -3668,7 +3682,7 @@ VVGL.SceneNode.prototype.removeChild = function (node) {
     if (index === -1) {
         throw new VVGL.Exception("Trying to remove unexisting child from node.");
     }
-    this.children.slice(index, 1);
+    this.children.splice(index, 1);
 };
 
 /**
@@ -3687,6 +3701,27 @@ VVGL.SceneNode.prototype.getParent = function () {
  */
 VVGL.SceneNode.prototype.getChildren = function () {
 	return (this.children);
+};
+
+
+/**
+ * Node created counter.
+ *
+ * @static
+ * @private
+ * @type {number}
+ */
+VVGL.SceneNode.created = 0;
+
+/**
+ * Get unique scene Id
+ *
+ * @static
+ * @private
+ * @return {string}
+ */
+VVGL.SceneNode.getUniqueId = function () {
+    return (VVGL.SceneNode.created.toString());
 };
 /**
  * @class

@@ -1,10 +1,19 @@
 /**
- * Create black color.
+ * Create color from arguments, or black color if none.
  *
  * @class
  * @classdesc Functions for color-number manipulation.
+ * @param {number} [r=0] Red value (between 0 and 1)
+ * @param {number} [g=0] Green value (between 0 and 1)
+ * @param {number} [b=0] Blue value (between 0 and 1)
+ * @param {number} [a=1] Alpha value (between 0 and 1)
  */
-VVGL.Color = function () {};
+VVGL.Color = function (r, g, b, a) {
+    this.r = VVGL.setIfUndefined(r, 0.0);
+    this.g = VVGL.setIfUndefined(g, 0.0);
+    this.b = VVGL.setIfUndefined(b, 0.0);
+    this.a = VVGL.setIfUndefined(a, 1.0);
+};
 
 /**
  * Red color data
@@ -92,28 +101,12 @@ VVGL.Color.prototype.clone = function () {
 
 
 /**
- * Initialize const color values.
- * 
- * @private
- */
-VVGL.Color.initStaticValues = function () {
-	VVGL.Color.black.setFromFloatNumbers(0.0, 0.0, 0.0);
-	VVGL.Color.red.setFromFloatNumbers(1.0, 0.0, 0.0);
-	VVGL.Color.green.setFromFloatNumbers(0.0, 1.0, 0.0);
-	VVGL.Color.blue.setFromFloatNumbers(0.0, 0.0, 1.0);
-	VVGL.Color.yellow.setFromFloatNumbers(1.0, 1.0, 0.0);
-	VVGL.Color.magenta.setFromFloatNumbers(1.0, 0.0, 1.0);
-	VVGL.Color.cyan.setFromFloatNumbers(0.0, 1.0, 1.0);
-	VVGL.Color.white.setFromFloatNumbers(1.0, 1.0, 1.0);
-};
-
-/**
  * Black color instance.
  * 
  * @type {VVGL.Color}
  * @const
  */
-VVGL.Color.black = new VVGL.Color();
+VVGL.Color.black = new VVGL.Color(0, 0, 0);
 
 /**
  * Red color instance.
@@ -121,7 +114,7 @@ VVGL.Color.black = new VVGL.Color();
  * @type {VVGL.Color}
  * @const
  */
-VVGL.Color.red = new VVGL.Color();
+VVGL.Color.red = new VVGL.Color(1, 0, 0);
 
 /**
  * Green color instance.
@@ -129,7 +122,7 @@ VVGL.Color.red = new VVGL.Color();
  * @type {VVGL.Color}
  * @const
  */
-VVGL.Color.green = new VVGL.Color();
+VVGL.Color.green = new VVGL.Color(0, 1, 0);
 
 /**
  * Blue color instance.
@@ -137,7 +130,7 @@ VVGL.Color.green = new VVGL.Color();
  * @type {VVGL.Color}
  * @const
  */
-VVGL.Color.blue = new VVGL.Color();
+VVGL.Color.blue = new VVGL.Color(0, 0, 1);
 
 /**
  * Yellow color instance.
@@ -145,7 +138,7 @@ VVGL.Color.blue = new VVGL.Color();
  * @type {VVGL.Color}
  * @const
  */
-VVGL.Color.yellow = new VVGL.Color();
+VVGL.Color.yellow = new VVGL.Color(1, 1, 0);
 
 /**
  * Magenta color instance.
@@ -153,7 +146,7 @@ VVGL.Color.yellow = new VVGL.Color();
  * @type {VVGL.Color}
  * @const
  */
-VVGL.Color.magenta = new VVGL.Color();
+VVGL.Color.magenta = new VVGL.Color(1, 0, 1);
 
 /**
  * Cyan color instance.
@@ -161,7 +154,7 @@ VVGL.Color.magenta = new VVGL.Color();
  * @type {VVGL.Color}
  * @const
  */
-VVGL.Color.cyan = new VVGL.Color();
+VVGL.Color.cyan = new VVGL.Color(0, 1, 1);
 
 /**
  * White color instance.
@@ -169,4 +162,4 @@ VVGL.Color.cyan = new VVGL.Color();
  * @type {VVGL.Color}
  * @const
  */
-VVGL.Color.white = new VVGL.Color();
+VVGL.Color.white = new VVGL.Color(1, 1, 1);
