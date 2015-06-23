@@ -935,7 +935,7 @@ VVGL.fusionClasses = function (prototype1, prototype2) {
 VVGL.Camera = function () {
 	VVGL.SceneData.call(this, "camera");
 	VVGL.EventsHandler.call(this);
-	
+
 	this.perspective = new VVGL.Mat4();
 	this.view = new VVGL.Mat4();
 	
@@ -1023,6 +1023,22 @@ VVGL.Camera.prototype.getView = function () {
 	this.view.lookAt(this.position, this.target, this.up);
 	return (this.view);
 };
+
+/**
+ * Copy camera parameters to another one.
+ *
+ * @param {VVGL.Camera} copy
+ */
+VVGL.Camera.prototype.copyTo = function (copy) {
+    copy.position = this.position.clone();
+    copy.target = this.target.clone();
+    copy.up = this.up.clone();
+
+    copy.angle = this.angle;
+    copy.aspectRatio = this.aspectRatio;
+    copy.minRange = this.minRange;
+    copy.maxRange = this.maxRange;
+};
 /**
  * @class
  * @classdesc Camera free to move everywhere, moving with keyboard, turning with mouse.
@@ -1091,7 +1107,7 @@ VVGL.FreeFlyCamera.prototype.recalcVectors = function () {
 	this.left.normalize();
 	
 	this.position.copyTo(this.target);
-	this.target.add(this.forward);
+	this.target.sub(this.forward);
 };
 
 /**
@@ -1124,7 +1140,7 @@ VVGL.FreeFlyCamera.prototype.update = function (elapsedTime) {
  * @param {VVGL.FreeFlyCamera} camera
  */
 VVGL.FreeFlyCamera.advanceFront = function (camera) {
-	camera.move.add(camera.forward);
+	camera.move.sub(camera.forward);
 };
 
 /**
@@ -1135,7 +1151,7 @@ VVGL.FreeFlyCamera.advanceFront = function (camera) {
  * @param {VVGL.FreeFlyCamera} camera
  */
 VVGL.FreeFlyCamera.advanceBack = function (camera) {
-	camera.move.sub(camera.forward);
+	camera.move.add(camera.forward);
 };
 
 /**
@@ -1146,7 +1162,7 @@ VVGL.FreeFlyCamera.advanceBack = function (camera) {
  * @param {VVGL.FreeFlyCamera} camera
  */
 VVGL.FreeFlyCamera.advanceRight = function (camera) {
-	camera.move.add(camera.left);
+	camera.move.sub(camera.left);
 };
 
 /**
@@ -1157,7 +1173,20 @@ VVGL.FreeFlyCamera.advanceRight = function (camera) {
  * @param {VVGL.FreeFlyCamera} camera
  */
 VVGL.FreeFlyCamera.advanceLeft = function (camera) {
-	camera.move.sub(camera.left);
+	camera.move.add(camera.left);
+};
+
+/**
+ * Copy camera parameters to another one.
+ *
+ * @override
+ * @param {VVGL.Camera} copy
+ */
+VVGL.FreeFlyCamera.prototype.copyTo = function (copy) {
+    VVGL.Camera.prototype.copyTo.call(this, copy);
+
+    copy.angleX = this.angleX;
+    copy.angleY = this.angleY;
 };
 
 /**
@@ -1174,13 +1203,29 @@ VVGL.FreeFlyCamera.turnCamera = function (camera, x, y) {
 		var yMax = VVGL.Maths.PI / 2 - 0.01;
 		
 		camera.angleX += x * camera.sensitivity;
-		camera.angleY += y * camera.sensitivity;
+		camera.angleY -= y * camera.sensitivity;
 		if (camera.angleY > yMax) {
 			camera.angleY = yMax;
 		} else if (camera.angleY < -yMax) {
 			camera.angleY = -yMax;
 		}
 	}
+};
+
+/**
+ * Create a new freefly camera with position, target and parameters from another.
+ *
+ * @static
+ * @param {VVGL.Camera} camera Reference camera
+ * @return {VVGL.FreeFlyCamera}
+ */
+VVGL.FreeFlyCamera.copy = function (camera) {
+    var copy = new VVGL.FreeFlyCamera();
+
+    camera.copyTo(copy);
+    copy.recalcVectors();
+
+    return (copy);
 };
 /**
  * @class
@@ -1272,7 +1317,7 @@ VVGL.TrackballCamera.prototype.recalcVectors = function () {
  * Update camera data.
  * Move position if camera was turning,
  * update movement with inertia,
- * and recalc other vectors.
+ * and recalculate other vectors.
  *
  * @override
  * @param {number} elapsedTime
@@ -1290,6 +1335,27 @@ VVGL.TrackballCamera.prototype.update = function (elapsedTime) {
 
     this.recalcVectors();
 };
+
+/**
+ * Copy camera parameters to another one.
+ *
+ * @override
+ * @param {VVGL.Camera} copy
+ */
+VVGL.TrackballCamera.prototype.copyTo = function (copy) {
+    VVGL.Camera.prototype.copyTo.call(this, copy);
+
+    copy.angleX = this.angleX;
+    copy.angleY = this.angleY;
+};
+
+/**
+ * Set camera zoom distance to current distance between position and target.
+ */
+VVGL.TrackballCamera.prototype.fixDistanceToCurrent = function () {
+    this.distance = VVGL.Vec3.distance(this.position, this.target);
+};
+
 
 /**
  * Turn camera mouse movement listener.
@@ -1342,6 +1408,23 @@ VVGL.TrackballCamera.zoom = function (camera, x, y, deltaX, deltaY, deltaZ) {
         camera.distance -= camera.distance * camera.zoomSpeed;
         ++deltaY;
     }
+};
+
+/**
+ * Create a new trackball camera with position, target and parameters from another.
+ *
+ * @static
+ * @param {VVGL.Camera} camera Reference camera
+ * @return {VVGL.TrackballCamera}
+ */
+VVGL.TrackballCamera.copy = function (camera) {
+    var copy = new VVGL.TrackballCamera();
+
+    camera.copyTo(copy);
+    copy.fixDistanceToCurrent();
+    copy.recalcVectors();
+
+    return (copy);
 };
 /**
  * Create color from arguments, or black color if none.
@@ -2396,6 +2479,17 @@ VVGL.Vec2.prototype.y = 0.0;
 
 
 /**
+ * Set new vector values.
+ *
+ * @param {number} x
+ * @param {number} y
+ */
+VVGL.Vec2.prototype.set = function (x, y) {
+    this.x = x;
+    this.y = y;
+};
+
+/**
  * Add another vector to this one.
  *
  * @param {VVGL.Vec2} vector
@@ -2508,6 +2602,19 @@ VVGL.Vec3.prototype.y = 0.0;
  */
 VVGL.Vec3.prototype.z = 0.0;
 
+
+/**
+ * Set new vector values.
+ *
+ * @param {number} x
+ * @param {number} y
+ * @param {number} z
+ */
+VVGL.Vec3.prototype.set = function (x, y, z) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+};
 
 /**
  * Add another vector to this one.
@@ -2725,6 +2832,21 @@ VVGL.Vec4.prototype.z = 0.0;
  */
 VVGL.Vec4.prototype.w = 0.0;
 
+
+/**
+ * Set new vector values.
+ *
+ * @param {number} x
+ * @param {number} y
+ * @param {number} z
+ * @param {number} w
+ */
+VVGL.Vec3.prototype.set = function (x, y, z, w) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+    this.w = w;
+};
 
 /**
  * Add another vector to this one.

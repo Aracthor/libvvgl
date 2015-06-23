@@ -30,6 +30,17 @@ VVGL.Vec2.prototype.y = 0.0;
 
 
 /**
+ * Set new vector values.
+ *
+ * @param {number} x
+ * @param {number} y
+ */
+VVGL.Vec2.prototype.set = function (x, y) {
+    this.x = x;
+    this.y = y;
+};
+
+/**
  * Add another vector to this one.
  *
  * @param {VVGL.Vec2} vector

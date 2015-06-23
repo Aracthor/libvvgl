@@ -7,7 +7,7 @@
 VVGL.Camera = function () {
 	VVGL.SceneData.call(this, "camera");
 	VVGL.EventsHandler.call(this);
-	
+
 	this.perspective = new VVGL.Mat4();
 	this.view = new VVGL.Mat4();
 	
@@ -94,4 +94,20 @@ VVGL.Camera.prototype.getPerspective = function () {
 VVGL.Camera.prototype.getView = function () {
 	this.view.lookAt(this.position, this.target, this.up);
 	return (this.view);
+};
+
+/**
+ * Copy camera parameters to another one.
+ *
+ * @param {VVGL.Camera} copy
+ */
+VVGL.Camera.prototype.copyTo = function (copy) {
+    copy.position = this.position.clone();
+    copy.target = this.target.clone();
+    copy.up = this.up.clone();
+
+    copy.angle = this.angle;
+    copy.aspectRatio = this.aspectRatio;
+    copy.minRange = this.minRange;
+    copy.maxRange = this.maxRange;
 };

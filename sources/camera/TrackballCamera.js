@@ -88,7 +88,7 @@ VVGL.TrackballCamera.prototype.recalcVectors = function () {
  * Update camera data.
  * Move position if camera was turning,
  * update movement with inertia,
- * and recalc other vectors.
+ * and recalculate other vectors.
  *
  * @override
  * @param {number} elapsedTime
@@ -106,6 +106,27 @@ VVGL.TrackballCamera.prototype.update = function (elapsedTime) {
 
     this.recalcVectors();
 };
+
+/**
+ * Copy camera parameters to another one.
+ *
+ * @override
+ * @param {VVGL.Camera} copy
+ */
+VVGL.TrackballCamera.prototype.copyTo = function (copy) {
+    VVGL.Camera.prototype.copyTo.call(this, copy);
+
+    copy.angleX = this.angleX;
+    copy.angleY = this.angleY;
+};
+
+/**
+ * Set camera zoom distance to current distance between position and target.
+ */
+VVGL.TrackballCamera.prototype.fixDistanceToCurrent = function () {
+    this.distance = VVGL.Vec3.distance(this.position, this.target);
+};
+
 
 /**
  * Turn camera mouse movement listener.
@@ -158,4 +179,21 @@ VVGL.TrackballCamera.zoom = function (camera, x, y, deltaX, deltaY, deltaZ) {
         camera.distance -= camera.distance * camera.zoomSpeed;
         ++deltaY;
     }
+};
+
+/**
+ * Create a new trackball camera with position, target and parameters from another.
+ *
+ * @static
+ * @param {VVGL.Camera} camera Reference camera
+ * @return {VVGL.TrackballCamera}
+ */
+VVGL.TrackballCamera.copy = function (camera) {
+    var copy = new VVGL.TrackballCamera();
+
+    camera.copyTo(copy);
+    copy.fixDistanceToCurrent();
+    copy.recalcVectors();
+
+    return (copy);
 };

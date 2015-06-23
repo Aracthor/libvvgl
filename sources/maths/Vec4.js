@@ -47,6 +47,21 @@ VVGL.Vec4.prototype.w = 0.0;
 
 
 /**
+ * Set new vector values.
+ *
+ * @param {number} x
+ * @param {number} y
+ * @param {number} z
+ * @param {number} w
+ */
+VVGL.Vec3.prototype.set = function (x, y, z, w) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+    this.w = w;
+};
+
+/**
  * Add another vector to this one.
  * 
  * @param {VVGL.Vec4} vector

@@ -66,7 +66,7 @@ VVGL.FreeFlyCamera.prototype.recalcVectors = function () {
 	this.left.normalize();
 	
 	this.position.copyTo(this.target);
-	this.target.add(this.forward);
+	this.target.sub(this.forward);
 };
 
 /**
@@ -99,7 +99,7 @@ VVGL.FreeFlyCamera.prototype.update = function (elapsedTime) {
  * @param {VVGL.FreeFlyCamera} camera
  */
 VVGL.FreeFlyCamera.advanceFront = function (camera) {
-	camera.move.add(camera.forward);
+	camera.move.sub(camera.forward);
 };
 
 /**
@@ -110,7 +110,7 @@ VVGL.FreeFlyCamera.advanceFront = function (camera) {
  * @param {VVGL.FreeFlyCamera} camera
  */
 VVGL.FreeFlyCamera.advanceBack = function (camera) {
-	camera.move.sub(camera.forward);
+	camera.move.add(camera.forward);
 };
 
 /**
@@ -121,7 +121,7 @@ VVGL.FreeFlyCamera.advanceBack = function (camera) {
  * @param {VVGL.FreeFlyCamera} camera
  */
 VVGL.FreeFlyCamera.advanceRight = function (camera) {
-	camera.move.add(camera.left);
+	camera.move.sub(camera.left);
 };
 
 /**
@@ -132,7 +132,20 @@ VVGL.FreeFlyCamera.advanceRight = function (camera) {
  * @param {VVGL.FreeFlyCamera} camera
  */
 VVGL.FreeFlyCamera.advanceLeft = function (camera) {
-	camera.move.sub(camera.left);
+	camera.move.add(camera.left);
+};
+
+/**
+ * Copy camera parameters to another one.
+ *
+ * @override
+ * @param {VVGL.Camera} copy
+ */
+VVGL.FreeFlyCamera.prototype.copyTo = function (copy) {
+    VVGL.Camera.prototype.copyTo.call(this, copy);
+
+    copy.angleX = this.angleX;
+    copy.angleY = this.angleY;
 };
 
 /**
@@ -149,11 +162,27 @@ VVGL.FreeFlyCamera.turnCamera = function (camera, x, y) {
 		var yMax = VVGL.Maths.PI / 2 - 0.01;
 		
 		camera.angleX += x * camera.sensitivity;
-		camera.angleY += y * camera.sensitivity;
+		camera.angleY -= y * camera.sensitivity;
 		if (camera.angleY > yMax) {
 			camera.angleY = yMax;
 		} else if (camera.angleY < -yMax) {
 			camera.angleY = -yMax;
 		}
 	}
+};
+
+/**
+ * Create a new freefly camera with position, target and parameters from another.
+ *
+ * @static
+ * @param {VVGL.Camera} camera Reference camera
+ * @return {VVGL.FreeFlyCamera}
+ */
+VVGL.FreeFlyCamera.copy = function (camera) {
+    var copy = new VVGL.FreeFlyCamera();
+
+    camera.copyTo(copy);
+    copy.recalcVectors();
+
+    return (copy);
 };

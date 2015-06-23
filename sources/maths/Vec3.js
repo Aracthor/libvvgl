@@ -38,6 +38,19 @@ VVGL.Vec3.prototype.z = 0.0;
 
 
 /**
+ * Set new vector values.
+ *
+ * @param {number} x
+ * @param {number} y
+ * @param {number} z
+ */
+VVGL.Vec3.prototype.set = function (x, y, z) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+};
+
+/**
  * Add another vector to this one.
  * 
  * @param {VVGL.Vec3} vector
