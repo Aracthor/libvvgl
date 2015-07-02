@@ -6,7 +6,7 @@
  */
 VVGL.Mesh = function (renderMode) {
 	VVGL.SceneData.call(this, "mesh");
-	renderMode = VVGL.setIfUndefined(renderMode, VVGL.RenderMode.TRIANGLES);
+	renderMode = renderMode !== undefined ? renderMode : VVGL.RenderMode.TRIANGLES;
 	
 	this.verticesBuffers = [];
 	this.useColor = false;
@@ -155,7 +155,7 @@ VVGL.Mesh.prototype.addIndices = function (indices) {
 /**
  * Set mesh texture. Necessary if textureCoords are used.
  * 
- * @param {VVGL.Texture} texture
+ * @param {VVGL.GLTexture} texture
  */
 VVGL.Mesh.prototype.setTexture = function (texture) {
 	this.texture = texture;
@@ -164,7 +164,7 @@ VVGL.Mesh.prototype.setTexture = function (texture) {
 /**
  * Set shader program.
  * 
- * @param {VVGL.ShaderProgram} texture
+ * @param {VVGL.ShaderProgram} shader
  */
 VVGL.Mesh.prototype.setShader = function (shader) {
 	this.shader = shader;

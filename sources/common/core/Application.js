@@ -1,20 +1,21 @@
 /**
  * Super singleton manager of canvas, graphic and physic engine.
  * This class has to be instanciate only once in your program.
- * You can then access your instance with {@link VVGL.Application.instance}
+ * You can then access your instance with {@link VVGL.Application.access}
  * 
  * @class
- * @extends VVGL.EventsHandler
  * @classdesc Super singleton manager of canvas, graphic and physic engine.
+ * @extends VVGL.EventsHandler
  * @param {string} canvasId Id of your HTML canvas.
  */
 VVGL.Application = function (canvasId) {
 	VVGL.Application.instance = this;
 	this.canvas = document.getElementById(canvasId);
-	
-	this.initAPI();
-	this.initContext();
-	this.renderer = new VVGL.Renderer();
+
+    this.width = this.canvas.width;
+    this.height = this.canvas.height;
+
+    this.initAPI();
 };
 
 VVGL.Application.prototype = Object.create(VVGL.EventsHandler.prototype);
@@ -32,21 +33,16 @@ VVGL.Application.prototype.initAPI = function () {
 };
 
 /**
- * Initialize Context
- * 
- * @private
+ * Resize canvas resolution to specific width and height.
+ *
+ * @param {number} width
+ * @param {number} height
  */
-VVGL.Application.prototype.initContext = function () {
-	try {
-		this.context = this.canvas.getContext("experimental-webgl");
-	} catch (exception) {
-		throw new VVGL.Exception("Cannot initalize WebGL. Sorry for that.");
-	}
-	
-	this.context.viewportWidth = this.canvas.width;
-	this.context.viewportHeight = this.canvas.height;
-	this.context.viewport(0, 0, this.canvas.width, this.canvas.height);
-	gl = this.context;
+VVGL.Application.prototype.resize = function (width, height) {
+    this.width = width;
+    this.height = height;
+    this.canvas.width = width;
+    this.canvas.height = height;
 };
 
 /**
@@ -100,16 +96,6 @@ VVGL.Application.prototype.manageEvents = function () {
 VVGL.Application.prototype.getSceneManager = function () {
 	return (this.sceneManager);
 };
-
-/**
- * Get application WebGL renderer.
- *
- * @return {VVGL.Renderer} Application renderer.
- */
-VVGL.Application.prototype.getRenderer = function () {
-    return (this.renderer);
-};
-
 /**
  * Lock mouse pointer once user will have clicked.
  */

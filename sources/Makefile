@@ -5,146 +5,199 @@
 ## Login   <aracthor@epitech.net>
 ## 
 ## Started on  Sat Apr 11 09:31:12 2015 aracthor
-## Last Update Fri Jun 19 17:18:57 2015 Aracthor
+## Last Update Thu Jul  2 10:52:25 2015 Aracthor
 ##
 
 CC=		cat
 
 # Lib made
-NAME=		vvgl
-FILENAME=	lib$(NAME).js
+2DNAME=		vvgl2D
+2DFILENAME=	lib$(2DNAME).js
+3DNAME=		vvgl3D
+3DFILENAME=	lib$(3DNAME).js
 LIBPATH=	../
-LIBFILE=	$(LIBPATH)$(FILENAME)
+3DLIBFILE=	$(LIBPATH)$(3DFILENAME)
+2DLIBFILE=	$(LIBPATH)$(2DFILENAME)
 
-CAMERA_DIR=	camera/
-CAMERA_FILES=	Camera.js		\
-		FreeFlyCamera.js	\
-		TrackballCamera.js
-CAMERA_SRCS=	$(CAMERA_FILES:%.js=$(CAMERA_DIR)%.js)
+COMMON_DIR=	common/
+2D_DIR=		2D/
+3D_DIR=		3D/
 
-CORE_DIR=	core/
-CORE_FILES=	Application.js	\
-		core.js
-CORE_SRCS=	$(CORE_FILES:%.js=$(CORE_DIR)%.js)
+COMMON_CORE_DIR=	$(COMMON_DIR)core/
+COMMON_CORE_FILES=	Application.js	\
+			core.js
+COMMON_CORE_SRCS=	$(COMMON_CORE_FILES:%.js=$(COMMON_CORE_DIR)%.js)
 
-DATA_DIR=	data/
-DATA_FILES=	Color.js
-DATA_SRCS=	$(DATA_FILES:%.js=$(DATA_DIR)%.js)
+COMMON_DATA_DIR=	$(COMMON_DIR)data/
+COMMON_DATA_FILES=	Color.js
+COMMON_DATA_SRCS=	$(COMMON_DATA_FILES:%.js=$(COMMON_DATA_DIR)%.js)
 
-EVENTS_DIR=	events/
-EVENTS_FILES=	EventsManager.js		\
-		EventsHandler.js		\
-		Keyboard.js			\
-		KeyEventListener.js		\
-		Mouse.js			\
-		MouseButtonEventListener.js	\
-		MouseMovementListener.js	\
-		WheelMovementListener.js
-EVENTS_SRCS=	$(EVENTS_FILES:%.js=$(EVENTS_DIR)%.js)
+COMMON_ENUMS_DIR=	$(COMMON_DIR)enums/
+COMMON_ENUMS_FILES=	KeyCode.js	\
+			MouseButton.js
+COMMON_ENUMS_SRCS=	$(COMMON_ENUMS_FILES:%.js=$(COMMON_ENUMS_DIR)%.js)
 
-EXCEPTIONS_DIR=		exceptions/
-EXCEPTIONS_FILES=	Exception.js			\
-			GLErrorException.js		\
-			GLRessourceException.js		\
-			ImplementationException.js
-EXCEPTIONS_SRCS=	$(EXCEPTIONS_FILES:%.js=$(EXCEPTIONS_DIR)%.js)
+COMMON_EVENTS_DIR=	$(COMMON_DIR)events/
+COMMON_EVENTS_FILES=	EventsManager.js		\
+			EventsHandler.js		\
+			Keyboard.js			\
+			KeyEventListener.js		\
+			Mouse.js			\
+			MouseButtonEventListener.js	\
+			MouseMovementListener.js	\
+			WheelMovementListener.js
+COMMON_EVENTS_SRCS=	$(COMMON_EVENTS_FILES:%.js=$(COMMON_EVENTS_DIR)%.js)
 
-ENUMS_DIR=	enums/
-ENUMS_FILES=	KeyCode.js	\
-		MouseButton.js	\
-		RenderMode.js
-ENUMS_SRCS=	$(ENUMS_FILES:%.js=$(ENUMS_DIR)%.js)
+COMMON_EXCEPTIONS_DIR=		$(COMMON_DIR)exceptions/
+COMMON_EXCEPTIONS_FILES=	Exception.js			\
+				ImplementationException.js
+COMMON_EXCEPTIONS_SRCS=		$(COMMON_EXCEPTIONS_FILES:%.js=$(COMMON_EXCEPTIONS_DIR)%.js)
 
-INTERFACES_DIR=		interfaces/
-INTERFACES_FILES=	IBindable.js	\
+COMMON_MATHS_DIR=	$(COMMON_DIR)maths/
+COMMON_MATHS_FILES=	Mat3.js		\
+			Mat4.js		\
+			Maths.js	\
+			Random.js	\
+			Vec2.js		\
+			Vec3.js		\
+			Vec4.js
+COMMON_MATHS_SRCS=	$(COMMON_MATHS_FILES:%.js=$(COMMON_MATHS_DIR)%.js)
+
+COMMON_SCENE_DIR=	$(COMMON_DIR)scene/
+COMMON_SCENE_FILES=	SceneManager.js
+COMMON_SCENE_SRCS=	$(COMMON_SCENE_FILES:%.js=$(COMMON_SCENE_DIR)%.js)
+
+COMMON_TEXTURE_DIR=	$(COMMON_DIR)texture/
+COMMON_TEXTURE_FILES=	Texture.js
+COMMON_TEXTURE_SRCS=	$(COMMON_TEXTURE_FILES:%.js=$(COMMON_TEXTURE_DIR)%.js)
+
+COMMON_TIME_DIR=	$(COMMON_DIR)time/
+COMMON_TIME_FILES=	Clock.js
+COMMON_TIME_SRCS=	$(COMMON_TIME_FILES:%.js=$(COMMON_TIME_DIR)%.js)
+
+
+
+2D_CORE_DIR=	$(2D_DIR)core/
+2D_CORE_FILES=	Application2D.js
+2D_CORE_SRCS=	$(2D_CORE_FILES:%.js=$(2D_CORE_DIR)%.js)
+
+2D_DRAWABLE_DIR=	$(2D_DIR)drawable/
+2D_DRAWABLE_FILES=	Drawable.js	\
+			Arc.js		\
+			Frame.js	\
+			LineCap.js	\
+			Line.js		\
+			Rectangle.js	\
+			Sprite.js	\
+			Text.js
+2D_DRAWABLE_SRCS=	$(2D_DRAWABLE_FILES:%.js=$(2D_DRAWABLE_DIR)%.js)
+
+2D_SCENE_DIR=	$(2D_DIR)scene/
+2D_SCENE_FILES=	SceneNode.js
+2D_SCENE_SRCS=	$(2D_SCENE_FILES:%.js=$(2D_SCENE_DIR)%.js)
+
+
+3D_CAMERA_DIR=		$(3D_DIR)camera/
+3D_CAMERA_FILES=	Camera.js		\
+			FreeFlyCamera.js	\
+			TrackballCamera.js
+3D_CAMERA_SRCS=		$(3D_CAMERA_FILES:%.js=$(3D_CAMERA_DIR)%.js)
+
+3D_CORE_DIR=	$(3D_DIR)core/
+3D_CORE_FILES=	Application3D.js
+3D_CORE_SRCS=	$(3D_CORE_FILES:%.js=$(3D_CORE_DIR)%.js)
+
+3D_ENUMS_DIR=	$(3D_DIR)enums/
+3D_ENUMS_FILES=	RenderMode.js
+3D_ENUMS_SRCS=	$(3D_ENUMS_FILES:%.js=$(3D_ENUMS_DIR)%.js)
+
+3D_EXCEPTIONS_DIR=	$(3D_DIR)exceptions/
+3D_EXCEPTIONS_FILES=	GLErrorException.js	\
+			GLRessourceException.js
+3D_EXCEPTIONS_SRCS=	$(3D_EXCEPTIONS_FILES:%.js=$(3D_EXCEPTIONS_DIR)%.js)
+
+3D_INTERFACES_DIR=	$(3D_DIR)interfaces/
+3D_INTERFACES_FILES=	IBindable.js	\
 			SceneData.js
-INTERFACES_SRCS=	$(INTERFACES_FILES:%.js=$(INTERFACES_DIR)%.js)
+3D_INTERFACES_SRCS=	$(3D_INTERFACES_FILES:%.js=$(3D_INTERFACES_DIR)%.js)
 
-LIGHT_DIR=	light/
-LIGHT_FILES=	Light.js		\
+3D_LIGHT_DIR=	$(3D_DIR)light/
+3D_LIGHT_FILES=	Light.js		\
 		AmbianceLight.js	\
 		DirectionLight.js	\
 		SpotLight.js
-LIGHT_SRCS=	$(LIGHT_FILES:%.js=$(LIGHT_DIR)%.js)
+3D_LIGHT_SRCS=	$(3D_LIGHT_FILES:%.js=$(3D_LIGHT_DIR)%.js)
 
-MATHS_DIR=	maths/
-MATHS_FILES=	Mat3.js		\
-		Mat4.js		\
-		Maths.js	\
-		Random.js	\
-		Vec2.js		\
-		Vec3.js		\
-		Vec4.js
-MATHS_SRCS=	$(MATHS_FILES:%.js=$(MATHS_DIR)%.js)
-
-MESH_DIR=	mesh/
-MESH_FILES=	ArrayBuffer.js	\
+3D_MESH_DIR=	$(3D_DIR)mesh/
+3D_MESH_FILES=	ArrayBuffer.js	\
 		Mesh.js		\
 		Axis.js
-MESH_SRCS=	$(MESH_FILES:%.js=$(MESH_DIR)%.js)
+3D_MESH_SRCS=	$(3D_MESH_FILES:%.js=$(3D_MESH_DIR)%.js)
 
-RENDER_DIR=	render/
-RENDER_FILES=	FrameRender.js	\
-		Renderer.js
-RENDER_SRCS=	$(RENDER_FILES:%.js=$(RENDER_DIR)%.js)
+3D_RENDER_DIR=		$(3D_DIR)render/
+3D_RENDER_FILES=	FrameRender.js	\
+			Renderer.js
+3D_RENDER_SRCS=		$(3D_RENDER_FILES:%.js=$(3D_RENDER_DIR)%.js)
 
-SHADER_DIR=	shader/
-SHADER_FILES=	Attribute.js		\
-		Shader.js		\
-		ShaderProgram.js
-SHADER_SRCS=	$(SHADER_FILES:%.js=$(SHADER_DIR)%.js)
+3D_SHADER_DIR=		$(3D_DIR)shader/
+3D_SHADER_FILES=	Attribute.js		\
+			Shader.js		\
+			ShaderProgram.js
+3D_SHADER_SRCS=		$(3D_SHADER_FILES:%.js=$(3D_SHADER_DIR)%.js)
 
-SCENE_DIR=	scene/
-SCENE_FILES=	Scene.js		\
-		SceneManager.js		\
+3D_SCENE_DIR=	$(3D_DIR)scene/
+3D_SCENE_FILES=	Scene.js		\
 		Transformable.js	\
 		SceneNode.js
-SCENE_SRCS=	$(SCENE_FILES:%.js=$(SCENE_DIR)%.js)
+3D_SCENE_SRCS=	$(3D_SCENE_FILES:%.js=$(3D_SCENE_DIR)%.js)
 
-SUPERVISORS_DIR=	supervisors/
-SUPERVISORS_FILES=	MatrixSupervisor.js	\
-			ModelMatrix.js		\
-			PerspectiveMatrix.js	\
-			ViewMatrix.js
-SUPERVISORS_SRCS=	$(SUPERVISORS_FILES:%.js=$(SUPERVISORS_DIR)%.js)
-
-TEXTURE_DIR=	texture/
-TEXTURE_FILES=	Texture.js
-TEXTURE_SRCS=	$(TEXTURE_FILES:%.js=$(TEXTURE_DIR)%.js)
-
-TIME_DIR=	time/
-TIME_FILES=	Clock.js
-TIME_SRCS=	$(TIME_FILES:%.js=$(TIME_DIR)%.js)
+3D_TEXTURE_DIR=		$(3D_DIR)texture/
+3D_TEXTURE_FILES=	GLTexture.js
+3D_TEXTURE_SRCS=	$(3D_TEXTURE_FILES:%.js=$(3D_TEXTURE_DIR)%.js)
 
 
-SRCS=	namespace.js		\
-	$(ENUMS_SRCS)		\
-	$(INTERFACES_SRCS)	\
-	$(EVENTS_SRCS)		\
-	$(CORE_SRCS)		\
-	$(CAMERA_SRCS)		\
-	$(DATA_SRCS)		\
-	$(EXCEPTIONS_SRCS)	\
-	$(LIGHT_SRCS)		\
-	$(MATHS_SRCS)		\
-	$(MESH_SRCS)		\
-	$(RENDER_SRCS)		\
-	$(SCENE_SRCS)		\
-	$(SHADER_SRCS)		\
-	$(TEXTURE_SRCS)		\
-	$(TIME_SRCS)		\
-#	$(SUPERVISORS_SRCS)
+COMMON_SRCS=	$(COMMON_DIR)namespace.js	\
+		$(COMMON_ENUMS_SRCS)		\
+		$(COMMON_EVENTS_SRCS)		\
+		$(COMMON_CORE_SRCS)		\
+		$(COMMON_DATA_SRCS)		\
+		$(COMMON_EXCEPTIONS_SRCS)	\
+		$(COMMON_MATHS_SRCS)		\
+		$(COMMON_SCENE_SRCS)		\
+		$(COMMON_TEXTURE_SRCS)		\
+		$(COMMON_TIME_SRCS)
+
+2D_SRCS=	$(COMMON_SRCS)		\
+		$(2D_CORE_SRCS)		\
+		$(2D_DRAWABLE_SRCS)	\
+		$(2D_SCENE_SRCS)
+
+3D_SRCS=	$(COMMON_SRCS)		\
+		$(3D_ENUMS_SRCS)	\
+		$(3D_INTERFACES_SRCS)	\
+		$(3D_CAMERA_SRCS)	\
+		$(3D_CORE_SRCS)		\
+		$(3D_EXCEPTIONS_SRCS)	\
+		$(3D_LIGHT_SRCS)	\
+		$(3D_MESH_SRCS)		\
+		$(3D_RENDER_SRCS)	\
+		$(3D_SCENE_SRCS)	\
+		$(3D_SHADER_SRCS)	\
+		$(3D_TEXTURE_SRCS)
 
 
 
-$(LIBFILE):	$(SRCS)
-		$(CC) $(SRCS) > $(LIBFILE)
+all:		$(3DLIBFILE) $(2DLIBFILE)
 
-all:		$(LIBFILE)
+$(2DLIBFILE):	$(2D_SRCS)
+		$(CC) $(2D_SRCS) > $(2DLIBFILE)
+
+$(3DLIBFILE):	$(3D_SRCS)
+		$(CC) $(3D_SRCS) > $(3DLIBFILE)
 
 clean:
 
 fclean:		clean
-		$(RM) $(LIBFILE)
+		$(RM) $(2DLIBFILE) $(3DLIBFILE)
 
 re:		fclean all

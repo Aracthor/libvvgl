@@ -6,7 +6,7 @@
  * @param {string} message Problem resume.
  */
 VVGL.GLRessourceException = function (ressource, message) {
-	VVGL.Exception.call(this, message);
+	VVGL.Exception.call(this, message, "GLRessourceError");
 	this.ressource = ressource;
 };
 

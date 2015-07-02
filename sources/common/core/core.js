@@ -1,15 +1,4 @@
 /**
- * Return first param, or defaultValue if param is undefined.
- * 
- * @param {Object} param undefined or not to check.
- * @param {Object} defaultValue Value to return if param is undefined.
- * @returns {Object} param if not undefined, else defaultValue.
- */
-VVGL.setIfUndefined = function (param, defaultValue) {
-	return (param !== undefined ? param : defaultValue);
-};
-
-/**
  * Allow multi-inheritance.
  * Return a prototype that concatenate both arguments.
  * 

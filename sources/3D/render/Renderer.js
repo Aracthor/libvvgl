@@ -1,7 +1,7 @@
 /**
  * Webgl Renderer.
  * Graphics control panel.
- * Accessible directly from {@link VVGL.Application}.
+ * Accessible directly from {@link VVGL.Application3D}.
  *
  * @class
  * @classdesc Webgl Renderer.

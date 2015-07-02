@@ -8,9 +8,8 @@
  * @param {string} className Name of the abstract class.
  */
 VVGL.ImplementationException = function (linkedObject, functionName, className) {
-	VVGL.Exception.call(this, "Missing implementation of " + functionName + " in object " + className + ".");
+	VVGL.Exception.call(this, "Missing implementation of " + functionName + " in object " + className + ".", "MissingImplementationError");
 	this.linkedObject = linkedObject;
-	this.type = "implementation";
 };
 
 VVGL.ImplementationException.prototype = Object.create(VVGL.Exception.prototype);
@@ -19,8 +18,9 @@ VVGL.ImplementationException.prototype = Object.create(VVGL.Exception.prototype)
  * Print error message.
  * 
  * @override
+ * @return {string} Error message
  */
-VVGL.ImplementationException.prototype.what = function () {
+VVGL.ImplementationException.prototype.toString = function () {
 	console.log("Missing implementation object:");
 	console.log(this.linkedObject);
 	return (VVGL.Exception.prototype.what.call(this));

@@ -6,7 +6,7 @@
  */
 VVGL.GLErrorException = function (func, error) {
 	var message = "OpenGL error after " + func + ": " + this.interpreteError(error);
-	VVGL.Exception.call(this, message);
+	VVGL.Exception.call(this, message, "GLInternError");
 };
 
 VVGL.GLErrorException.prototype = Object.create(VVGL.Exception.prototype);

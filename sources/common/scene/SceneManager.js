@@ -16,8 +16,8 @@ VVGL.SceneManager = function () {
  * @param {Boolean} select The new scene is now the current one if this param is true. Set to false if undefined.
  */
 VVGL.SceneManager.prototype.addScene = function(name, scene, select) {
-	select = VVGL.setIfUndefined(select, false);
-	
+    select = select ? select : false;
+
 	this.scenes[name] = scene;
 	if (select) {
 		this.currentScene = scene;

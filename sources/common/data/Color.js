@@ -9,10 +9,10 @@
  * @param {number} [a=1] Alpha value (between 0 and 1)
  */
 VVGL.Color = function (r, g, b, a) {
-    this.r = VVGL.setIfUndefined(r, 0.0);
-    this.g = VVGL.setIfUndefined(g, 0.0);
-    this.b = VVGL.setIfUndefined(b, 0.0);
-    this.a = VVGL.setIfUndefined(a, 1.0);
+    this.r = r ? r : 0.0;
+    this.g = g ? g : 0.0;
+    this.b = b ? b : 0.0;
+    this.a = a !== undefined ? a : 1.0;
 };
 
 /**
@@ -65,7 +65,7 @@ VVGL.Color.prototype.setFromInteger = function (number) {
  * @param {number} a Alpha value.
  */
 VVGL.Color.prototype.setFromIntNumbers = function (r, g, b, a) {
-	a = VVGL.setIfUndefined(a, 0xFF);
+	a = a !== undefined ? a : 0xFF;
 	this.setFromInteger((r << 24) + (g << 16) + (b << 8) + a);
 };
 
@@ -79,7 +79,7 @@ VVGL.Color.prototype.setFromIntNumbers = function (r, g, b, a) {
  * @param {number} a Alpha value.
  */
 VVGL.Color.prototype.setFromFloatNumbers = function (r, g, b, a) {
-	a = VVGL.setIfUndefined(a, 1.0);
+	a = a !== undefined ? a : 1.0;
 	this.r = r;
 	this.g = g;
 	this.b = b;
@@ -163,3 +163,24 @@ VVGL.Color.cyan = new VVGL.Color(0, 1, 1);
  * @const
  */
 VVGL.Color.white = new VVGL.Color(1, 1, 1);
+
+/**
+ * Convert color to hexa string format.
+ *
+ * @return {string}
+ */
+VVGL.Color.prototype.toString = function () {
+    var colors = [this.r, this.g, this.b];
+    var string = "#";
+
+    for (var i in colors) {
+        var color = colors[i] * 0x100;
+        var elem = color.toString(16);
+        if (elem.length === 1) {
+            elem = "0" + elem;
+        }
+        string += elem;
+    }
+
+    return (string);
+};

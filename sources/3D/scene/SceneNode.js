@@ -9,11 +9,11 @@
  */
 VVGL.SceneNode = function (data, id) {
 	VVGL.Transformable.call(this);
-	this.data = VVGL.setIfUndefined(data, null);
-    this.id = VVGL.setIfUndefined(id, VVGL.SceneNode.getUniqueId());
+	this.data = data ? data : null;
+	this.id = id ? id : VVGL.SceneNode.getUniqueId();
 	this.parent = null;
 	this.children = [];
-    ++VVGL.SceneNode.created;
+	++VVGL.SceneNode.created;
 };
 
 VVGL.SceneNode.prototype = Object.create(VVGL.Transformable.prototype);

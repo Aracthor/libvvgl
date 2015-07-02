@@ -1,35 +1,31 @@
 /**
- * Create new texture from image file.
+ * Create new bindable texture from image file.
  * 
  * @class
  * @classdesc Bindable texture.
+ * @extends {VVGL.Texture}
  * @implements {VVGL.IBindable}
  * @param {string} source Image file path.
- * @todo Add texture manager.
  */
-VVGL.Texture = function (source) {
-	var me = this;
-	
+VVGL.GLTexture = function (source) {
+    VVGL.Texture.call(this, source);
+
 	this.texture = gl.createTexture();
-	this.image = new Image();
-	this.image.onload = function () {me.onLoad();};
-	this.image.onerror = function () {me.onError();};
-	this.image.src = source;
 };
 
-VVGL.Texture.prototype = Object.create(VVGL.IBindable.prototype);
+VVGL.GLTexture.prototype = Object.create(VVGL.Texture.prototype);
 
 /**
  * Define this texture as used.
  */
-VVGL.Texture.prototype.bind = function () {
+VVGL.GLTexture.prototype.bind = function () {
 	gl.bindTexture(gl.TEXTURE_2D, this.texture);
 };
 
 /**
  * Define no texture as used.
  */
-VVGL.Texture.prototype.unbind = function () {
+VVGL.GLTexture.prototype.unbind = function () {
 	gl.bindTexture(gl.TEXTURE_2D, null);
 };
 
@@ -38,7 +34,7 @@ VVGL.Texture.prototype.unbind = function () {
  * 
  * @todo Use multiple textures.
  */
-VVGL.Texture.prototype.activate = function () {
+VVGL.GLTexture.prototype.activate = function () {
 	var shader = VVGL.ShaderProgram.currentProgram;
 	
     gl.activeTexture(gl.TEXTURE0);
@@ -46,22 +42,15 @@ VVGL.Texture.prototype.activate = function () {
     shader.setIntUniform("uTexture", 0);
 };
 
-
-/**
- * Called if image loading failed.
- * 
- * @private
- */
-VVGL.Texture.prototype.onError = function () {
-	alert("Failed to load texture " + this.image.src);
-};
-
 /**
  * Called once image finished to load.
  * 
  * @private
+ * @override
  */
-VVGL.Texture.prototype.onLoad = function () {
+VVGL.GLTexture.prototype.onLoad = function () {
+    VVGL.Texture.prototype.onLoad.call(this);
+
 	this.bind();
 	{
 	    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
@@ -69,5 +58,5 @@ VVGL.Texture.prototype.onLoad = function () {
 	    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 	    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 	}
-    this.unbind();
+	this.unbind();
 };
