@@ -8,7 +8,7 @@
  * @param {string} [name="Error"]
  */
 VVGL.Exception = function (message, name) {
-	Error.prototype.call(this);
+	Error.call(this);
 	this.name = name ? name : "Error"
 	this.message = message;
 };

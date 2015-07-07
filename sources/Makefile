@@ -5,7 +5,7 @@
 ## Login   <aracthor@epitech.net>
 ## 
 ## Started on  Sat Apr 11 09:31:12 2015 aracthor
-## Last Update Thu Jul  2 10:52:25 2015 Aracthor
+## Last Update Tue Jul  7 14:35:17 2015 Aracthor
 ##
 
 CC=		cat
@@ -131,6 +131,7 @@ COMMON_TIME_SRCS=	$(COMMON_TIME_FILES:%.js=$(COMMON_TIME_DIR)%.js)
 3D_MESH_DIR=	$(3D_DIR)mesh/
 3D_MESH_FILES=	ArrayBuffer.js	\
 		Mesh.js		\
+		Skybox.js	\
 		Axis.js
 3D_MESH_SRCS=	$(3D_MESH_FILES:%.js=$(3D_MESH_DIR)%.js)
 

@@ -21,10 +21,6 @@ VVGL.ShaderProgram = function (vertexShader, fragmentShader) {
 	}
 	
 	this.bind();
-	this.addAttribute("aPosition");
-	this.addAttribute("aColor");
-	this.addAttribute("aTextureCoord");
-	this.addAttribute("aNormal");
 };
 
 /**
@@ -48,7 +44,11 @@ VVGL.ShaderProgram.prototype.fragmentShader = null;
  * @param {string} name Attribute name.
  */
 VVGL.ShaderProgram.prototype.addAttribute = function (name) {
-	this.attributes[name] = new VVGL.Attribute(this, name);
+    var attribute = new VVGL.Attribute(this, name);
+
+	this.attributes[name] = attribute;
+
+    return attribute;
 };
 
 /**
@@ -90,7 +90,7 @@ VVGL.ShaderProgram.prototype.setAttribute = function (name, buffer) {
 	var attribute = this.attributes[name];
 	
 	if (!attribute) {
-		throw new VVGL.Exception("Trying to get undefined attribute: " + name);
+        attribute = this.addAttribute(name);
 	}
 	
 	attribute.enable();
@@ -106,7 +106,7 @@ VVGL.ShaderProgram.prototype.unsetAttribute = function (name) {
 	var attribute = this.attributes[name];
 	
 	if (!attribute) {
-		throw new VVGL.Exception("Trying to get undefined attribute: " + name);
+		throw new VVGL.Exception("Trying to unset undefined attribute: " + name);
 	}
 	
 	attribute.disable();
@@ -208,6 +208,17 @@ VVGL.ShaderProgram.prototype.setMatrix4Uniform = function (name, matrix) {
 
 
 /**
+ * Initialize static shaders samples.
+ *
+ * @private
+ * @static
+ */
+VVGL.ShaderProgram.initStaticShaders = function () {
+    VVGL.ShaderProgram.basicShader = VVGL.ShaderProgram.createFromStrings(VVGL.Shader.basicVertexShader, VVGL.Shader.basicFragmentShader);
+};
+
+
+/**
  * Currently used shader program.
  * 
  * @static
@@ -231,21 +242,6 @@ VVGL.ShaderProgram.createFromFiles = function (vertexId, fragmentId) {
 };
 
 /**
- * Create a shader program from two element ids linked to shaders scripts.
- * 
- * @static
- * @param {string} vertexId Element id of vertex shader script.
- * @param {string} fragmentId Element id of fragment shader script.
- * @return {VVGL.ShaderProgram} Program created.
- */
-VVGL.ShaderProgram.createFromScripts = function (vertexId, fragmentId) {
-	var vertexShader = VVGL.Shader.createFromScript(vertexId, gl.VERTEX_SHADER);
-	var fragmentShader = VVGL.Shader.createFromScript(fragmentId, gl.FRAGMENT_SHADER);
-	
-	return (new VVGL.ShaderProgram(vertexShader, fragmentShader));
-};
-
-/**
  * Create a shader program from two strings containing shaders's codes.
  * 
  * @static
@@ -259,3 +255,12 @@ VVGL.ShaderProgram.createFromStrings = function (vertexString, fragmentString) {
 	
 	return (new VVGL.ShaderProgram(vertexShader, fragmentShader));
 };
+
+
+/**
+ * Ready to use shader program for simple texturing.
+ *
+ * @readonly
+ * @type {VVGL.ShaderProgram}
+ */
+VVGL.ShaderProgram.basicShader = null;

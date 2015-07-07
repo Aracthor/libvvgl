@@ -192,11 +192,9 @@ VVGL.Mesh.prototype.render = function () {
 	this.bindArrays();
 	{
 		if (this.indices === null) {
-			VVGL.GLErrorException.checkError("drawArrays before");
 			gl.drawArrays(this.renderMode, 0, this.itemsNumber);
 			VVGL.GLErrorException.checkError("drawArrays");
 		} else {
-			VVGL.GLErrorException.checkError("drawElements before");
 			gl.drawElements(this.renderMode, this.itemsNumber, gl.UNSIGNED_SHORT, 0);
 			VVGL.GLErrorException.checkError("drawElements");
 		}

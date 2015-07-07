@@ -9,7 +9,7 @@
 VVGL.Renderer = function () {
 	this.enableDepth();
 	this.enableBackfaceCulling();
-	gl.enable(gl.CULL_FACE);
+    gl.enable(gl.CULL_FACE);
 	this.backgroundColor = new VVGL.Color();
 	this.setBackgroundColor(VVGL.Color.black);
 	
@@ -48,15 +48,15 @@ VVGL.Renderer.prototype.prepareFrame = function () {
  */
 VVGL.Renderer.prototype.drawScene = function (scene) {
 	this.frameRender.reset();
-	
-	var camera = scene.getActiveCamera();
-	if (camera === null) {
-		throw new VVGL.Exception("No active camera for scene rendering.");
-	}
-	
+
 	scene.getRoot().render(this);
-	
-	this.frameRender.render(camera);
+
+    var camera = scene.getActiveCamera();
+    if (camera === null) {
+        throw new VVGL.Exception("No active camera for scene rendering.");
+    }
+
+	this.frameRender.render(camera, scene.getSkybox());
 };
 
 /**
@@ -96,15 +96,6 @@ VVGL.Renderer.prototype.disableDepth = function () {
 };
 
 /**
- * Check if depth test is enabled.
- * 
- * @return {boolean}
- */
-VVGL.Renderer.prototype.isDepthEnabled = function () {
-	return (this.depthTest);
-};
-
-/**
  * Active backface culling.
  * Enabled by default.
  */
@@ -114,9 +105,18 @@ VVGL.Renderer.prototype.enableBackfaceCulling = function () {
 };
 
 /**
+ * Check if backfaceculling is enabled.
+ *
+ * @return {boolean}
+ */
+VVGL.Renderer.prototype.isBackfaceCullingEnabled = function () {
+    return (this.backfaceCulling);
+};
+
+/**
  * Disable backface culling.
  */
 VVGL.Renderer.prototype.disableBackfaceCulling = function () {
-	this.depthTest = false;
+	this.backfaceCulling = false;
 	gl.disable(gl.CULL_FACE);
 };

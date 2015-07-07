@@ -12,6 +12,7 @@ VVGL.Application3D = function (canvasId) {
     VVGL.Application.call(this, canvasId);
 
     this.initContext();
+    this.init3DAPI();
     this.renderer = new VVGL.Renderer();
 };
 
@@ -33,6 +34,15 @@ VVGL.Application3D.prototype.initContext = function () {
     this.context.viewportHeight = this.canvas.height;
     this.context.viewport(0, 0, this.canvas.width, this.canvas.height);
     gl = this.context; // Singleton for easier use.
+};
+
+/**
+ * Initialize lib data linked to 3D and WebGL stuff.
+ *
+ * @private
+ */
+VVGL.Application3D.prototype.init3DAPI = function () {
+    VVGL.ShaderProgram.initStaticShaders();
 };
 
 /**

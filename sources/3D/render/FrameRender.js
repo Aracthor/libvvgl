@@ -13,7 +13,7 @@ VVGL.FrameRender = function () {
 VVGL.FrameRender.prototype.reset = function () {
 	this.datas["camera"]	= [];
 	this.datas["light"]		= [];
-	this.datas["mesh"]		= [];
+    this.datas["mesh"]		= [];
 };
 
 /**
@@ -77,34 +77,63 @@ VVGL.FrameRender.prototype.addData = function (data, matrix) {
  * Configure perspective and view matrices from active camera.
  * 
  * @private
+ * @param {VVGL.ShaderProgram} shader
  * @param {VVGL.Camera} camera
- * @return {VVGL.Mat4} View matrix
  */
-VVGL.FrameRender.prototype.configureFromCamera = function (activeCamera) {
-	var program = VVGL.ShaderProgram.currentProgram;
-	program.setMatrix4Uniform("uPerspectiveMatrix", activeCamera.getPerspective());
-	program.setMatrix4Uniform("uViewMatrix", activeCamera.getView());
-	
-	return (activeCamera.getView());
+VVGL.FrameRender.prototype.configureFromCamera = function (shader, activeCamera) {
+	shader.setMatrix4Uniform("uPerspectiveMatrix", activeCamera.getPerspective());
+	shader.setMatrix4Uniform("uViewMatrix", activeCamera.getView());
+};
+
+/**
+ * Render skybox to screen.
+ *
+ * @private
+ * @param {VVGL.Camera} camera
+ * @param {VVGL.Skybox} skybox
+ */
+VVGL.FrameRender.prototype.renderSkybox = function (camera, skybox) {
+    var shader = skybox.getShader();
+    var renderer = VVGL.Application3D.access().getRenderer();
+    var backfaceCulling = renderer.isBackfaceCullingEnabled();
+
+    shader.bind();
+
+    skybox.centerToCamera(camera);
+    this.configureFromCamera(shader, camera);
+    shader.setMatrix4Uniform("uModelMatrix", skybox.getModelMatrix());
+
+    if (backfaceCulling) {
+        renderer.disableBackfaceCulling();
+    }
+    skybox.render();
+    if (backfaceCulling) {
+        renderer.enableBackfaceCulling();
+    }
 };
 
 /**
  * Render everything.
- * 
+ *
  * @param {VVGL.Camera} camera Active camera
+ * @param {VVGL.Skybox} skybox Scene skybox (can be null if none)
  */
-VVGL.FrameRender.prototype.render = function (camera) {
-	var viewMatrix = this.configureFromCamera(camera);
-	var modelViewMatrix = new VVGL.Mat4();
+VVGL.FrameRender.prototype.render = function (camera, skybox) {
 	var normalMatrix = new VVGL.Mat3();
-	
+
+    if (skybox) {
+        this.renderSkybox(camera, skybox);
+        gl.clear(gl.DEPTH_BUFFER_BIT);
+    }
+
 	for (var i in this.datas["mesh"]) {
 		var meshes = this.datas["mesh"][i];
-		var program = meshes.shader;
+		var shader = meshes.shader;
 		var list = meshes.list;
-		program.bind();
-		
-		this.addLights(program);
+		shader.bind();
+        this.configureFromCamera(shader, camera);
+
+		this.addLights(shader);
 		
 		for (var i in list) {
 			var mesh = list[i];
@@ -112,8 +141,8 @@ VVGL.FrameRender.prototype.render = function (camera) {
 			normalMatrix.normalFromMat4(mesh.matrix);
 			normalMatrix.transpose();
 			
-			program.setMatrix4Uniform("uModelMatrix", mesh.matrix);
-			program.setMatrix3Uniform("uNormalMatrix", normalMatrix);
+			shader.setMatrix4Uniform("uModelMatrix", mesh.matrix);
+			shader.setMatrix3Uniform("uNormalMatrix", normalMatrix);
 			mesh.data.render();
 		}
 	}

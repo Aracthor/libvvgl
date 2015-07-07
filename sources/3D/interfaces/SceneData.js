@@ -5,7 +5,6 @@
  * @class
  * @classdesc Renderable data.
  * @param {string} type
- * @todo pass to another folder.
  */
 VVGL.SceneData = function (type) {
 	this.type = type;

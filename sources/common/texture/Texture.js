@@ -27,11 +27,31 @@ VVGL.Texture.prototype.isReady = function () {
 };
 
 /**
+ * Get image width in pixels.
+ *
+ * @return {number}
+ */
+VVGL.Texture.prototype.getWidth = function () {
+    return (this.width);
+};
+
+/**
+ * Get image height in pixels.
+ *
+ * @return {number}
+ */
+VVGL.Texture.prototype.getHeight = function () {
+    return (this.height);
+};
+
+/**
  * Called on texture file loading end.
  *
  * @private
  */
 VVGL.Texture.prototype.onLoad = function () {
+    this.width = this.image.width;
+    this.height = this.image.height;
     this.ready = true;
 };
 

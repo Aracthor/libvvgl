@@ -5,6 +5,7 @@
 VVGL.Scene = function () {
 	this.root = new VVGL.SceneNode(null);
 	this.activeCamera = null;
+    this.skybox = null;
 };
 
 
@@ -18,6 +19,25 @@ VVGL.Scene.prototype.setActiveCamera = function (camera) {
 };
 
 /**
+ * Set scene skybox.
+ * Can be null to cancel skybox.
+ *
+ * @param {VVGL.Skybox} skybox Skybox object or null to cancel it.
+ */
+VVGL.Scene.prototype.setSkybox = function (skybox) {
+    this.skybox = skybox;
+};
+
+/**
+ * Return root scene node.
+ *
+ * @return {VVGL.SceneNode} Scene root node.
+ */
+VVGL.Scene.prototype.getRoot = function () {
+    return (this.root);
+};
+
+/**
  * Return active camera.
  * Return null if none camera is setted.
  * 
@@ -28,10 +48,10 @@ VVGL.Scene.prototype.getActiveCamera = function () {
 };
 
 /**
- * Return root scene node.
- * 
- * @return {VVGL.SceneNode} Scene root node.
+ * Return scene skybox or null if none.
+ *
+ * @return {VVGL.Skybox} Scene skybox.
  */
-VVGL.Scene.prototype.getRoot = function () {
-	return (this.root);
+VVGL.Scene.prototype.getSkybox = function () {
+    return (this.skybox);
 };

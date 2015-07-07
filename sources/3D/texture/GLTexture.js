@@ -39,7 +39,7 @@ VVGL.GLTexture.prototype.activate = function () {
 	
     gl.activeTexture(gl.TEXTURE0);
     this.bind();
-    shader.setIntUniform("uTexture", 0);
+    shader.setIntUniform("uTexture", 0); // TODO understand why 0?
 };
 
 /**
@@ -47,9 +47,23 @@ VVGL.GLTexture.prototype.activate = function () {
  * 
  * @private
  * @override
+ * @todo Handle different round methods
  */
 VVGL.GLTexture.prototype.onLoad = function () {
     VVGL.Texture.prototype.onLoad.call(this);
+
+    var valid = (this.width === this.height);
+    if (valid) {
+        var width = this.width;
+        while (width > 1) {
+            width /= 2;
+        }
+        valid = (width === 1);
+    }
+
+    if (!valid) {
+        throw new VVGL.GLRessourceException(this, "Invalid dimentions for texture.");
+    }
 
 	this.bind();
 	{
