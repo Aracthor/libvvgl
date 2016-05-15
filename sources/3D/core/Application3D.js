@@ -54,6 +54,17 @@ VVGL.Application3D.prototype.getRenderer = function () {
     return (this.renderer);
 };
 
+/**
+ * Draw scene.
+ *
+ * @private
+ * @override
+ */
+VVGL.Application3D.prototype.manageDisplay = function () {
+    this.renderer.prepareFrame();
+    this.renderer.drawScene(this.sceneManager.getCurrentScene());
+};
+
 
 /**
  * Access application instance

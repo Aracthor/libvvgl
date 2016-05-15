@@ -72,3 +72,19 @@ VVGL.SceneNode.prototype.draw = function (context) {
 	}
 	context.restore();
 };
+
+/**
+ * Update node data and these children's datas.
+ *
+ * @param {number} elapsedTime Elapsed miliseconds from last frame.
+ */
+VVGL.SceneNode.prototype.update = function (elapsedTime) {
+	if (this.data !== null) {
+		this.data.update(elapsedTime);
+	}
+
+	for (var i in this.children) {
+		this.children[i].update(elapsedTime);
+	}
+};
+

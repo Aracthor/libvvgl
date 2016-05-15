@@ -41,6 +41,19 @@ VVGL.Application2D.prototype.resizeToWindow = function () {
 };
 
 /**
+ * Draw scene.
+ *
+ * @private
+ * @override
+ */
+VVGL.Application2D.prototype.manageDisplay = function () {
+	this.context.fillStyle = this.clearColor.toString();
+	this.context.fillRect(0, 0, this.width, this.height);
+	this.sceneManager.getCurrentScene().getRoot().draw(this.context);
+};
+
+
+/**
  * Clear application screen.
  * 
  * @private

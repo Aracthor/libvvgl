@@ -723,8 +723,7 @@ VVGL.Application.prototype.manageData = function () {
  * @private
  */
 VVGL.Application.prototype.manageDisplay = function () {
-	this.renderer.prepareFrame();
-	this.renderer.drawScene(this.sceneManager.getCurrentScene());
+	throw new VVGL.ImplementationException(this, "unbind", "IBindable");
 };
 
 /**
@@ -2341,6 +2340,19 @@ VVGL.Application2D.prototype.resizeToWindow = function () {
 };
 
 /**
+ * Draw scene.
+ *
+ * @private
+ * @override
+ */
+VVGL.Application2D.prototype.manageDisplay = function () {
+	this.context.fillStyle = this.clearColor.toString();
+	this.context.fillRect(0, 0, this.width, this.height);
+	this.sceneManager.getCurrentScene().getRoot().draw(this.context);
+};
+
+
+/**
  * Clear application screen.
  * 
  * @private
@@ -2834,6 +2846,22 @@ VVGL.Text.prototype.render = function (context) {
 	}
 };
 /**
+ * @class
+ * @classdesc World scene.
+ */
+VVGL.Scene = function () {
+    this.root = new VVGL.SceneNode(null);
+};
+
+/**
+ * Return root scene node.
+ *
+ * @return {VVGL.SceneNode} Scene root node.
+ */
+VVGL.Scene.prototype.getRoot = function () {
+    return (this.root);
+};
+/**
  * Create node for a renderable data.
  * 
  * @param {VVGL.Renderable} data
@@ -2907,3 +2935,19 @@ VVGL.SceneNode.prototype.draw = function (context) {
 	}
 	context.restore();
 };
+
+/**
+ * Update node data and these children's datas.
+ *
+ * @param {number} elapsedTime Elapsed miliseconds from last frame.
+ */
+VVGL.SceneNode.prototype.update = function (elapsedTime) {
+	if (this.data !== null) {
+		this.data.update(elapsedTime);
+	}
+
+	for (var i in this.children) {
+		this.children[i].update(elapsedTime);
+	}
+};
+

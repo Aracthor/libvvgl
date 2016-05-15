@@ -75,8 +75,7 @@ VVGL.Application.prototype.manageData = function () {
  * @private
  */
 VVGL.Application.prototype.manageDisplay = function () {
-	this.renderer.prepareFrame();
-	this.renderer.drawScene(this.sceneManager.getCurrentScene());
+	throw new VVGL.ImplementationException(this, "unbind", "IBindable");
 };
 
 /**
