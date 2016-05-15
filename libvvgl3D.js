@@ -1017,7 +1017,7 @@ VVGL.Color.prototype.toString = function () {
     var string = "#";
 
     for (var i in colors) {
-        var color = colors[i] * 0x100;
+        var color = Math.floor(colors[i] * 0x100);
         var elem = color.toString(16);
         if (elem.length === 1) {
             elem = "0" + elem;

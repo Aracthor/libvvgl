@@ -20,7 +20,7 @@ VVGL.Application2D.prototype = Object.create(VVGL.Application.prototype);
  * @type {VVGL.Color}
  * @default
  */
-VVGL.Application2D.prototype.clearColor = VVGL.Color.white;
+VVGL.Application2D.prototype.clearColor = VVGL.Color.white.clone();
 
 
 /**
@@ -30,7 +30,6 @@ VVGL.Application2D.prototype.clearColor = VVGL.Color.white;
  */
 VVGL.Application2D.prototype.initContext = function () {
     this.context = this.canvas.getContext("2d");
-    this.clearColor = VVGL.Color.white.clone();
 };
 
 /**
@@ -47,8 +46,7 @@ VVGL.Application2D.prototype.resizeToWindow = function () {
  * @override
  */
 VVGL.Application2D.prototype.manageDisplay = function () {
-	this.context.fillStyle = this.clearColor.toString();
-	this.context.fillRect(0, 0, this.width, this.height);
+	this.clear();
 	this.sceneManager.getCurrentScene().getRoot().draw(this.context);
 };
 
